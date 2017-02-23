@@ -16,18 +16,21 @@ package dk.dma.ais.coverage;
 
 import java.util.function.Consumer;
 
-import net.jcip.annotations.GuardedBy;
-import net.jcip.annotations.ThreadSafe;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dk.dma.ais.bus.AisBus;
 import dk.dma.ais.bus.consumer.DistributerConsumer;
 import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
+import dk.dma.ais.coverage.persistence.DatabaseInstance;
+import dk.dma.ais.coverage.persistence.DatabaseInstanceFactory;
+import dk.dma.ais.coverage.persistence.PersisterService;
+import dk.dma.ais.coverage.persistence.TypeBasedDatabaseInstanceFactory;
 import dk.dma.ais.coverage.web.WebServer;
 import dk.dma.ais.packet.AisPacket;
 import dk.dma.ais.reader.AisReader;
+import net.jcip.annotations.GuardedBy;
+import net.jcip.annotations.ThreadSafe;
 
 
 /**
@@ -46,16 +49,20 @@ public final class AisCoverage {
     private final AisBus aisBus;
     private final WebServer webServer;
     private AisReader aisReader;
+    private PersisterService persisterService;
+    private final DatabaseInstance databaseInstance;
 
-    private AisCoverage(AisCoverageConfiguration conf) {
+    private AisCoverage(AisCoverageConfiguration conf, DatabaseInstanceFactory databaseInstanceFactory) {
         this.conf = conf;
 
-        // Create handler
-        handler = new CoverageHandler(conf);
+        databaseInstance = databaseInstanceFactory.createDatabaseInstance(conf.getDatabaseConfiguration().getType());
+        databaseInstance.open(conf.getDatabaseConfiguration());
+        databaseInstance.createDatabase();
 
-        // Create AisBus
+        handler = new CoverageHandler(conf);
         aisBus = conf.getAisbusConfiguration().getInstance();
-        
+        persisterService = new PersisterService(databaseInstance, handler.getDataHandler());
+        persisterService.intervalInSeconds(conf.getDatabaseConfiguration().getPersistenceIntervalInSeconds());
 
         // Create web server
         if (conf.getServerConfiguration() != null) {
@@ -82,23 +89,23 @@ public final class AisCoverage {
             aisBus.start();
             aisBus.startConsumers();
             aisBus.startProviders();
-            LOG.info("aisbus startet");
+            LOG.info("aisbus started");
         }
         // Start web server
         if (webServer != null) {
             try {
                 webServer.start();
-                LOG.info("webserver startet");
+                LOG.info("webserver started");
             } catch (Exception e) {
                 LOG.error("Failed to start web server: " + e.getMessage());
                 e.printStackTrace();
             }
         }
+
+        persisterService.start();
     }
 
     public void stop() {
-        
-     // Start web server
         if (webServer != null) {
             try {
                 webServer.stop();
@@ -109,9 +116,15 @@ public final class AisCoverage {
             }
         }
         
-        // Stop AisBus
         aisBus.cancel();
         LOG.info("aisbus stopped");
+
+        persisterService.stop();
+        try {
+            databaseInstance.close();
+        } catch (Exception e) {
+            LOG.warn("Could not close DatabaseInstance cleanly", e);
+        }
     }
 
     public AisCoverageConfiguration getConf() {
@@ -123,7 +136,12 @@ public final class AisCoverage {
     }
 
     public static synchronized AisCoverage create(AisCoverageConfiguration conf) {
-        instance = new AisCoverage(conf);
+        instance = new AisCoverage(conf, new TypeBasedDatabaseInstanceFactory());
+        return instance;
+    }
+
+    public static synchronized AisCoverage create(AisCoverageConfiguration conf, DatabaseInstanceFactory databaseInstanceFactory) {
+        instance = new AisCoverage(conf, databaseInstanceFactory);
         return instance;
     }
 
@@ -131,4 +149,7 @@ public final class AisCoverage {
         return instance;
     }
 
+    void setPersisterService(PersisterService persisterService) {
+        this.persisterService = persisterService;
+    }
 }

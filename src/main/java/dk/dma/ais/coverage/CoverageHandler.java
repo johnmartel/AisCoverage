@@ -17,7 +17,9 @@ package dk.dma.ais.coverage;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,28 +37,11 @@ import dk.dma.ais.packet.AisPacket;
  * Handler for received AisPackets
  */
 public class CoverageHandler {
-
     private static final Logger LOG = LoggerFactory.getLogger(CoverageHandler.class);
     
-    //list of calculators
-    private ArrayList<AbstractCalculator> calculators = new ArrayList<AbstractCalculator>();
-    public ArrayList<AbstractCalculator> getCalculators() {
-        return calculators;
-    }
-
-    public void setCalculators(ArrayList<AbstractCalculator> calculators) {
-        this.calculators = calculators;
-    }
-
+    private List<AbstractCalculator> calculators = new ArrayList<AbstractCalculator>();
     private ICoverageData dataHandler;
-    
-    public ICoverageData getDataHandler() {
-        return dataHandler;
-    }
-
-    public void setDataHandler(ICoverageData dataHandler) {
-        this.dataHandler = dataHandler;
-    }
+    private AisCoverageConfiguration conf;
 
     //A doublet filtered message buffer, where a custom message will include a list of all sources
     private LinkedHashMap<String, CustomMessage> doubletBuffer = new LinkedHashMap<String, CustomMessage>() {
@@ -68,7 +53,7 @@ public class CoverageHandler {
             return this.size() > 10000;
         }
     };
-      
+
     //Fields used for debugging purposes
     private int unfiltCount;
     private long biggestDelay;
@@ -76,39 +61,52 @@ public class CoverageHandler {
     private int delayedMoreThanTen;
     private int delayedLessThanTen;
 
-    private AisCoverageConfiguration conf;
-
     public CoverageHandler(AisCoverageConfiguration conf) {
         this.conf=conf;
         Helper.conf=conf;
-        
+
         //Creating up data handler
         dataHandler = new OnlyMemoryData();
         LOG.info("coverage calculators set up with memory only data handling");
-        
+
         //creating calculators
         calculators.add(new TerrestrialCalculator(false));
         calculators.add(new SatCalculator());
-        
+
         for (AbstractCalculator calc : calculators) {
             calc.setDataHandler(dataHandler);
         }
 
         // Logging grid granularity
-        LOG.info("grid granularity initiated with lat: " + conf.getLatSize() + " and lon: " + conf.getLonSize()); 
-        
+        LOG.info("grid granularity initiated with lat: " + conf.getLatSize() + " and lon: " + conf.getLonSize());
+
         // One could set grid granularity based on meter scale and a latitude position like this
-            // Helper.setLatLonSize(meters, latitude);
-        
+        // Helper.setLatLonSize(meters, latitude);
+
         if (conf.getVerbosityLevel() > 0) {
             verboseDebug();
         }
-        
+
         // window size
         LOG.info("Max window size is " + conf.getWindowSize()+" hours");
         Purger purger = new Purger(conf.getWindowSize(), dataHandler, 5);
         purger.start();
+    }
 
+    public List<AbstractCalculator> getCalculators() {
+        return calculators;
+    }
+
+    public void setCalculators(List<AbstractCalculator> calculators) {
+        this.calculators = calculators;
+    }
+
+    public ICoverageData getDataHandler() {
+        return dataHandler;
+    }
+
+    public void setDataHandler(ICoverageData dataHandler) {
+        this.dataHandler = dataHandler;
     }
 
     public void receiveUnfiltered(AisPacket packet) {
@@ -132,13 +130,12 @@ public class CoverageHandler {
 
     }
     
-    private void process(CustomMessage m){
+    void process(CustomMessage m){
         for (AbstractCalculator calc : calculators) {
             calc.calculate(m);
         }
     }
-    
-    
+
     public void verboseDebug(){
         final Date then = new Date();
         Thread t = new Thread(new Runnable() {
@@ -189,5 +186,4 @@ public class CoverageHandler {
     public SatCalculator getSatCalc() {
         return (SatCalculator) calculators.get(1);
     }
-
 }

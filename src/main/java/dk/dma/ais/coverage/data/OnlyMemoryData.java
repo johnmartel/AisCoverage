@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import dk.dma.ais.coverage.AisCoverage;
 import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.Purger;
 import dk.dma.ais.coverage.calculator.AbstractCalculator;
 import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
 import dk.dma.ais.coverage.data.Ship.ShipClass;
@@ -198,7 +197,7 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.setMessageCounterTerrestrial(ts.getMessageCounterTerrestrial() + 1);
-
+        cell.incrementNOofReceivedSignals();
     }
 
     @Override
@@ -217,7 +216,7 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.incrementMissingSignals();
-
+        cell.incrementNOofMissingSignals();
     }
 
     public CustomMessage packetToCustomMessage(AisPacket packet) {

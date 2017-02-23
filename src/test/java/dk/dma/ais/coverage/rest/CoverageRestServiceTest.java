@@ -1,17 +1,18 @@
 package dk.dma.ais.coverage.rest;
 
-import dk.dma.ais.coverage.AisCoverageBuilder;
-import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.export.data.Status;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.util.Date;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.assertThat;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import dk.dma.ais.coverage.AisCoverageBuilder;
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.export.data.Status;
 
 /**
  * Tests in this class are synchronized because they are all using {@code Helper.firstMessage} and
@@ -24,7 +25,11 @@ public class CoverageRestServiceTest {
     @Before
     public void setUp() throws Exception {
         aisCoverageBuilder = new AisCoverageBuilder();
-        aisCoverageBuilder.build();
+        aisCoverageBuilder.withMockAisCoverageConfiguration()
+                .withMockAisBusConfiguration()
+                .withMockDatabaseConfiguration()
+                .withMockDatabaseInstanceForAnyType()
+                .build();
 
         restService = new CoverageRestService();
     }

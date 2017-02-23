@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongo-java-driver</artifactId>
-			<version>2.11.0</version>
+			<version>3.4.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
@@ -107,6 +107,12 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>2.7.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>de.bwaldvogel</groupId>
+			<artifactId>mongo-java-server</artifactId>
+			<version>1.6.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
