@@ -14,51 +14,31 @@
  */
 package dk.dma.ais.coverage.rest;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.UriInfo;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-//import dk.dma.ais.coverage.export.CSVGenerator;
 import dk.dma.ais.coverage.AisCoverage;
 import dk.dma.ais.coverage.CoverageHandler;
 import dk.dma.ais.coverage.Helper;
 import dk.dma.ais.coverage.calculator.TerrestrialCalculator;
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.ICoverageData;
-import dk.dma.ais.coverage.data.OnlyMemoryData;
-import dk.dma.ais.coverage.data.Source;
-import dk.dma.ais.coverage.data.TimeSpan;
-import dk.dma.ais.coverage.export.data.ExportShipTimeSpan;
-import dk.dma.ais.coverage.export.data.JSonCoverageMap;
-import dk.dma.ais.coverage.export.data.JsonConverter;
-import dk.dma.ais.coverage.export.data.JsonSource;
-import dk.dma.ais.coverage.export.data.Status;
+import dk.dma.ais.coverage.data.*;
+import dk.dma.ais.coverage.export.data.*;
 import dk.dma.ais.coverage.export.generators.ChartGenerator;
 import dk.dma.ais.coverage.export.generators.KMLGenerator;
 import dk.dma.ais.coverage.export.generators.XMLGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+//import dk.dma.ais.coverage.export.CSVGenerator;
 
 /**
  * JAX-RS rest services
@@ -425,15 +405,39 @@ public class CoverageRestService {
     @Produces(MediaType.APPLICATION_JSON)
     public Object status() throws IOException {
         LOG.info("getting status");
-        Date first = Helper.firstMessage;
-        Date last = Helper.latestMessage;
 
-        Status s = new Status();
-        s.firstMessage = first.getTime();
-        s.lastMessage = last.getTime();
-        s.analysisStatus = "Running";
-        return s;
+        Status status = new Status();
+        Date now = Helper.getFloorDate(new Date());
 
+        setFirstMessageTimestamp(status, now);
+        setLastMessageTimestamp(status, now);
+
+        status.analysisStatus = "Running";
+
+        return status;
     }
 
+    private void setFirstMessageTimestamp(Status status, Date now) {
+        if (messageReceived()) {
+            status.firstMessage = Helper.firstMessage.getTime();
+        } else {
+            status.firstMessage = now.getTime();
+        }
+    }
+
+    private boolean messageReceived() {
+        return Helper.firstMessage != null;
+    }
+
+    private void setLastMessageTimestamp(Status status, Date now) {
+        if (terrestrialMessageReceived()) {
+            status.lastMessage = Helper.latestMessage.getTime();
+        } else {
+            status.lastMessage = now.getTime();
+        }
+    }
+
+    private boolean terrestrialMessageReceived() {
+        return Helper.latestMessage != null;
+    }
 }
