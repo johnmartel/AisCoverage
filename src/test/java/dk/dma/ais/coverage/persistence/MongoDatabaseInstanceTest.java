@@ -101,7 +101,7 @@ public class MongoDatabaseInstanceTest {
     }
 
     private void initializeMongoClient() {
-        MongoClientOptions options = MongoClientOptions.builder().serverSelectionTimeout(100).build();
+        MongoClientOptions options = MongoClientOptions.builder().serverSelectionTimeout(300).build();
         mongoClient = new MongoClient(new ServerAddress(serverAddress), options);
     }
 
