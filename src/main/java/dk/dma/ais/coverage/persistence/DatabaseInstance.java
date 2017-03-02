@@ -40,4 +40,6 @@ public interface DatabaseInstance extends AutoCloseable {
      *      when connection to the database server is impossible for any reason
      */
     PersistenceResult save(List<Cell> coverageData);
+
+    List<Cell> loadLatestSavedCoverageData();
 }

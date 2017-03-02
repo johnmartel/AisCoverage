@@ -11,7 +11,8 @@ public class TypeBasedDatabaseInstanceFactory implements DatabaseInstanceFactory
         if ("MemoryOnly".equalsIgnoreCase(databaseType)) {
             return new MemoryOnlyDatabaseInstance();
         } else if ("MongoDB".equalsIgnoreCase(databaseType)) {
-            return new MongoDatabaseInstance();
+            MongoCoverageDataMarshaller marshaller = new MongoCoverageDataMarshaller();
+            return new MongoDatabaseInstance(marshaller);
         } else {
             throw new UnknownDatabaseTypeException(String.format("Unsupported database type: [%s]", databaseType));
         }

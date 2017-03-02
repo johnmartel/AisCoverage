@@ -1,5 +1,6 @@
 package dk.dma.ais.coverage.persistence;
 
+import java.util.Collections;
 import java.util.List;
 
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
@@ -12,12 +13,10 @@ class MemoryOnlyDatabaseInstance implements DatabaseInstance {
 
     @Override
     public void open(DatabaseConfiguration configuration) {
-
     }
 
     @Override
     public void createDatabase() {
-
     }
 
     @Override
@@ -26,7 +25,11 @@ class MemoryOnlyDatabaseInstance implements DatabaseInstance {
     }
 
     @Override
-    public void close() throws Exception {
+    public List<Cell> loadLatestSavedCoverageData() {
+        return Collections.emptyList();
+    }
 
+    @Override
+    public void close() throws Exception {
     }
 }

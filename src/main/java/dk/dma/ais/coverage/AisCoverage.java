@@ -14,6 +14,7 @@
  */
 package dk.dma.ais.coverage;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import dk.dma.ais.bus.AisBus;
 import dk.dma.ais.bus.consumer.DistributerConsumer;
 import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
+import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.persistence.DatabaseInstance;
 import dk.dma.ais.coverage.persistence.DatabaseInstanceFactory;
 import dk.dma.ais.coverage.persistence.PersisterService;
@@ -54,15 +56,15 @@ public final class AisCoverage {
 
     private AisCoverage(AisCoverageConfiguration conf, DatabaseInstanceFactory databaseInstanceFactory) {
         this.conf = conf;
+        handler = new CoverageHandler(conf);
 
         databaseInstance = databaseInstanceFactory.createDatabaseInstance(conf.getDatabaseConfiguration().getType());
         databaseInstance.open(conf.getDatabaseConfiguration());
         databaseInstance.createDatabase();
+        loadCoverageDataFromDatabase();
 
-        handler = new CoverageHandler(conf);
         aisBus = conf.getAisbusConfiguration().getInstance();
-        persisterService = new PersisterService(databaseInstance, handler.getDataHandler());
-        persisterService.intervalInSeconds(conf.getDatabaseConfiguration().getPersistenceIntervalInSeconds());
+        createPersisterService();
 
         // Create web server
         if (conf.getServerConfiguration() != null) {
@@ -81,6 +83,19 @@ public final class AisCoverage {
             }
         });                
         aisBus.registerConsumer(unfilteredConsumer);
+    }
+
+    private void loadCoverageDataFromDatabase() {
+        List<Cell> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
+
+        for (Cell cell : loadedCoverageData) {
+            handler.getDataHandler().updateCell(cell);
+        }
+    }
+
+    private void createPersisterService() {
+        persisterService = new PersisterService(databaseInstance, handler.getDataHandler());
+        persisterService.intervalInSeconds(conf.getDatabaseConfiguration().getPersistenceIntervalInSeconds());
     }
 
     public void start() {

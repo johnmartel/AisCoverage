@@ -2,9 +2,8 @@ package dk.dma.ais.coverage.persistence;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +15,9 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
+import dk.dma.ais.coverage.Helper;
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
 
@@ -27,11 +28,16 @@ class MongoDatabaseInstance implements DatabaseInstance {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDatabaseInstance.class);
     private static final String COVERAGE_DATA = "coverageData";
 
+    private CoverageDataMarshaller<Document> marshaller;
     private String mongoServerHost;
     private int mongoServerPort;
     private String databaseName;
     private MongoClientOptions mongoClientOptions = MongoClientOptions.builder().build();
     private MongoClient client;
+
+    public MongoDatabaseInstance(CoverageDataMarshaller<Document> marshaller) {
+        this.marshaller = marshaller;
+    }
 
     @Override
     public void open(DatabaseConfiguration configuration) {
@@ -107,22 +113,8 @@ class MongoDatabaseInstance implements DatabaseInstance {
     public PersistenceResult save(List<Cell> coverageData) {
         requireOpenConnection();
 
-        Document coverageDataDocument = new Document();
-        long numberOfSavedCells = 0;
-        coverageDataDocument.put("dataTimestamp", ZonedDateTime.now(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_DATE_TIME));
-        List<Map<String, Object>> grid = new ArrayList<>();
-        for (Cell cell : coverageData) {
-            Map<String, Object> savedCell = new LinkedHashMap<>();
-            savedCell.put("cellId", cell.getId());
-            savedCell.put("latitude", cell.getLatitude());
-            savedCell.put("longitude", cell.getLongitude());
-            savedCell.put("numberOfReceivedSignals", cell.getNOofReceivedSignals());
-            savedCell.put("numberOfMissedSignals", cell.getNOofMissingSignals());
-            grid.add(savedCell);
-
-            numberOfSavedCells++;
-        }
-        coverageDataDocument.put("cells", grid);
+        Document coverageDataDocument = marshaller.marshall(coverageData, ZonedDateTime.now(ZoneId.of("UTC")));
+        long numberOfSavedCells = ((List<Map<String, Object>>) coverageDataDocument.get("cells")).size();
 
         try {
             client.getDatabase(databaseName).getCollection(COVERAGE_DATA).insertOne(coverageDataDocument);
@@ -134,7 +126,37 @@ class MongoDatabaseInstance implements DatabaseInstance {
         return PersistenceResult.failure();
     }
 
+    @Override
+    public List<Cell> loadLatestSavedCoverageData() {
+        requireOpenConnection();
+
+        List<Cell> latestCoverageData = new ArrayList<>();
+
+        try {
+            Document orderByDataTimestamp = new Document();
+            orderByDataTimestamp.put("dataTimestamp", -1);
+
+            FindIterable<Document> foundDocuments = client.getDatabase(databaseName).getCollection(COVERAGE_DATA).find().sort(orderByDataTimestamp).limit(1);
+            if (foundDocuments.iterator().hasNext()) {
+                Document document = foundDocuments.iterator().next();
+                latestCoverageData.addAll(marshaller.unmarshall(document));
+            }
+        } catch (MongoException e) {
+            logAndTransformException(e);
+        }
+
+        if (!latestCoverageData.isEmpty()) {
+            Helper.firstMessage = latestCoverageData.get(0).getFixedWidthSpans().values().iterator().next().getFirstMessage();
+        }
+
+        return Collections.unmodifiableList(latestCoverageData);
+    }
+
     void setMongoClientOptions(MongoClientOptions mongoClientOptions) {
         this.mongoClientOptions = mongoClientOptions;
+    }
+
+    void setMarshaller(MongoCoverageDataMarshaller marshaller) {
+        this.marshaller = marshaller;
     }
 }

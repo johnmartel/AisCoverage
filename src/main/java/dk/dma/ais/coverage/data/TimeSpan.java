@@ -51,6 +51,10 @@ public class TimeSpan {
         return missingSignals;
     }
 
+    public void setMissingSignals(int missingSignals) {
+        this.missingSignals = missingSignals;
+    }
+
     public Map<String, Boolean> getDistinctShipsTerrestrial() {
         return distinctShipsTerrestrial;
     }

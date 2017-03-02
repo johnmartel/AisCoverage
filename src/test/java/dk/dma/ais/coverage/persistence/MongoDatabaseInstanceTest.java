@@ -6,11 +6,16 @@ import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.net.InetSocketAddress;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
+import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,6 +30,7 @@ import de.bwaldvogel.mongo.MongoServer;
 import de.bwaldvogel.mongo.backend.memory.MemoryBackend;
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.fixture.CellFixture;
 
 public class MongoDatabaseInstanceTest {
     private static final String NORDIC_COVERAGE_DATABASE = "nordicCoverage";
@@ -33,15 +39,17 @@ public class MongoDatabaseInstanceTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    private MongoDatabaseInstance databaseInstance;
+    private CoverageDataMarshaller marshaller;
     private MongoServer mongoServer;
     private DatabaseConfiguration configuration;
-    private MongoDatabaseInstance databaseInstance;
     private InetSocketAddress serverAddress;
     private MongoClient mongoClient;
 
     @Before
     public void setUp() throws Exception {
-        databaseInstance = new MongoDatabaseInstance();
+        marshaller = mock(CoverageDataMarshaller.class);
+        databaseInstance = new MongoDatabaseInstance(marshaller);
     }
 
     @After
@@ -93,7 +101,7 @@ public class MongoDatabaseInstanceTest {
     }
 
     private void initializeMongoClient() {
-        MongoClientOptions options = MongoClientOptions.builder().serverSelectionTimeout(10).build();
+        MongoClientOptions options = MongoClientOptions.builder().serverSelectionTimeout(100).build();
         mongoClient = new MongoClient(new ServerAddress(serverAddress), options);
     }
 
@@ -143,15 +151,13 @@ public class MongoDatabaseInstanceTest {
     public void givenACell_whenSave_thenCellIsPersistedInCoverageDataCollection() {
         startMongoServer();
         useStartedMongoServer();
-        databaseInstance.createDatabase();
+        preCreateCollection();
+        databaseInstance.setMarshaller(new MongoCoverageDataMarshaller());
 
-        Cell aCell = new Cell(49.9324, -64.6364, null);
-        aCell.addReceivedSignals(3);
-        aCell.addNOofMissingSignals(1);
+        Cell aCell = CellFixture.createCellWithTimeSpans();
 
         PersistenceResult result = databaseInstance.save(Arrays.asList(aCell));
 
-        initializeMongoClient();
         assertThat(result.getStatus(), is(equalTo(PersistenceResult.Status.SUCCESS)));
         assertThat(result.getWrittenCells(), is(1L));
         assertThat(mongoClient.getDatabase(NORDIC_COVERAGE_DATABASE).getCollection(COVERAGE_DATA_COLLECTION).count(), is(1L));
@@ -169,5 +175,44 @@ public class MongoDatabaseInstanceTest {
         thrown.expect(IllegalStateException.class);
 
         databaseInstance.save(Collections.emptyList());
+    }
+
+    @Test
+    public void givenDatabaseInstanceIsNotOpened_whenLoadLatestSavedCoverageData_thenIllegalStateExceptionIsThrown() {
+        thrown.expect(IllegalStateException.class);
+
+        databaseInstance.loadLatestSavedCoverageData();
+    }
+
+    @Test
+    public void givenNoSavedCoverageData_whenLoadLatestSavedCoverageData_thenEmptyListIsReturned() {
+        startMongoServer();
+        useStartedMongoServer();
+        preCreateCollection();
+
+        List<Cell> cells = databaseInstance.loadLatestSavedCoverageData();
+
+        assertThat(cells.isEmpty(), is(true));
+    }
+
+    @Test
+    public void givenSavedCoverageData_whenLoadLatestSavedCoverageData_thenThisDataIsReturned() {
+        startMongoServer();
+        useStartedMongoServer();
+        preCreateCollection();
+
+        Cell aCell = CellFixture.createCellWithTimeSpans();
+        Cell anotherCell = CellFixture.createCellWithNoTimeSpan();
+        List<Cell> cells = Arrays.asList(aCell, anotherCell);
+        MongoCoverageDataMarshaller marshaller = new MongoCoverageDataMarshaller();
+        Document document = marshaller.marshall(cells, ZonedDateTime.now(ZoneId.of("UTC")));
+
+        mongoClient.getDatabase(NORDIC_COVERAGE_DATABASE).getCollection(COVERAGE_DATA_COLLECTION).insertOne(document);
+
+        databaseInstance.setMarshaller(marshaller);
+
+        List<Cell> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
+
+        assertThat(loadedCoverageData.size(), is(equalTo(2)));
     }
 }

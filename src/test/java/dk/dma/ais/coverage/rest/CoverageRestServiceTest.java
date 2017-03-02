@@ -1,7 +1,11 @@
 package dk.dma.ais.coverage.rest;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Date;
@@ -77,6 +81,6 @@ public class CoverageRestServiceTest {
 
         assertThatStatusIsRunning(status);
         assertThat(status.firstMessage, is(equalTo(Helper.firstMessage.getTime())));
-        assertThat(status.lastMessage, is(equalTo(now.getTime())));
+        assertTrue(status.lastMessage >= now.getTime());
     }
 }

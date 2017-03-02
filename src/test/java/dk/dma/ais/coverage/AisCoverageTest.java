@@ -12,7 +12,7 @@ import dk.dma.ais.coverage.persistence.PersisterService;
 public class AisCoverageTest {
 
     @Test
-    public void whenNewInstance_thenDatabaseIsCreated() {
+    public void whenNewInstance_thenDatabaseIsCreatedAndExistingDataIsLoaded() {
         DatabaseConfiguration databaseConfiguration = new DatabaseConfiguration();
         databaseConfiguration.setType("MongoDB");
 
@@ -22,6 +22,7 @@ public class AisCoverageTest {
 
         verify(mockDatabaseInstance).open(databaseConfiguration);
         verify(mockDatabaseInstance).createDatabase();
+        verify(mockDatabaseInstance).loadLatestSavedCoverageData();
     }
 
     private AisCoverage aisCoverageWithMockDatabaseInstance(DatabaseConfiguration databaseConfiguration, DatabaseInstance mockDatabaseInstance) {

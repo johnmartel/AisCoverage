@@ -69,9 +69,13 @@ public class OnlyMemoryData implements ICoverageData {
     }
 
     @Override
-    public void updateCell(Cell c) {
-        // TODO Auto-generated method stub
-
+    public void updateCell(Cell newCell) {
+        Source superSource = getSource(AbstractCalculator.SUPERSOURCE_MMSI);
+        Cell oldCell = superSource.getCell(newCell.getLatitude(), newCell.getLongitude());
+        if (oldCell == null) {
+            oldCell = superSource.createCell(newCell.getLatitude(), newCell.getLongitude());
+        }
+        oldCell.setFixedWidthSpans(newCell.getFixedWidthSpans());
     }
 
     @Override
@@ -197,7 +201,6 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.setMessageCounterTerrestrial(ts.getMessageCounterTerrestrial() + 1);
-        cell.incrementNOofReceivedSignals();
     }
 
     @Override
@@ -216,7 +219,6 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.incrementMissingSignals();
-        cell.incrementNOofMissingSignals();
     }
 
     public CustomMessage packetToCustomMessage(AisPacket packet) {
