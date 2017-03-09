@@ -13,19 +13,24 @@ AisCoverage is a tool for calculating how well AIS receivers (sources) cover a g
 
 ## Building ##
 
-    mvn clean install 
+    ./mvnw clean install 
 
 ## Developing in Eclipse ##
 
 M2 Eclipse plugin or 
     
-    mvn eclipse:eclipse
+    ./mvnw eclipse:eclipse
 
-### Rest API ###
+## Rest API ##
 
     /coverage/rest/*
+    
+## Storing Coverage Data ##
+Only MongoDB is supported at the moment. Mongo v3.4.2 or above needs to be installed and authentication is not yet supported.
 
-### Distribution ###
+Data (atthe highest detailed level) is persisted by a background thread at regular (configurable) intervals. The default is 60 minutes.
+
+## Distribution ##
 
 A distributable zip file is found [here](http://fuka.dk/snapshots/AisCoverage-0.2.zip). <br>
 Be aware: As it contains executable files, your browser may post a warning when you download the file. <br><br>
@@ -42,7 +47,7 @@ When running tests over longer periods using mongodb you might experience some i
 The current release makes it possible to see the coverage within a limited timespan, down to a single hour, and with 1 hour intervals. <br>
 The data is currently only persisted in memory, so might make an out of memory error, if run over longer amounts of time. <br>
 
-A sample of how satalite data coverage will be handled is possible, by pressing ctrl, and dragging the mouse over the area of interest.
+A sample of how satellite data coverage will be handled is possible, by pressing ctrl, and dragging the mouse over the area of interest.
 <br>
 
 Examples of configuration files can be found here:<br>

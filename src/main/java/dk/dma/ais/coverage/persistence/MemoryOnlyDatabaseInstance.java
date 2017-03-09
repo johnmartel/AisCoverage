@@ -1,7 +1,8 @@
 package dk.dma.ais.coverage.persistence;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
@@ -20,13 +21,13 @@ class MemoryOnlyDatabaseInstance implements DatabaseInstance {
     }
 
     @Override
-    public PersistenceResult save(List<Cell> coverageData) {
+    public PersistenceResult save(Map<String, Collection<Cell>> coverageData) {
         return null;
     }
 
     @Override
-    public List<Cell> loadLatestSavedCoverageData() {
-        return Collections.emptyList();
+    public Map<String, Collection<Cell>> loadLatestSavedCoverageData() {
+        return Collections.emptyMap();
     }
 
     @Override

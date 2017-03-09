@@ -2,8 +2,9 @@ package dk.dma.ais.coverage.persistence;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
-import dk.dma.ais.coverage.Helper;
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
 
@@ -110,7 +110,7 @@ class MongoDatabaseInstance implements DatabaseInstance {
     }
 
     @Override
-    public PersistenceResult save(List<Cell> coverageData) {
+    public PersistenceResult save(Map<String, Collection<Cell>> coverageData) {
         requireOpenConnection();
 
         Document coverageDataDocument = marshaller.marshall(coverageData, ZonedDateTime.now(ZoneId.of("UTC")));
@@ -118,6 +118,7 @@ class MongoDatabaseInstance implements DatabaseInstance {
 
         try {
             client.getDatabase(databaseName).getCollection(COVERAGE_DATA).insertOne(coverageDataDocument);
+            LOG.info("Saved [{}] cells with timestamp [{}]", numberOfSavedCells, coverageDataDocument.get("dataTimestamp"));
             return PersistenceResult.success(numberOfSavedCells);
         } catch (MongoException e) {
             logAndTransformException(e);
@@ -127,10 +128,10 @@ class MongoDatabaseInstance implements DatabaseInstance {
     }
 
     @Override
-    public List<Cell> loadLatestSavedCoverageData() {
+    public Map<String, Collection<Cell>> loadLatestSavedCoverageData() {
         requireOpenConnection();
 
-        List<Cell> latestCoverageData = new ArrayList<>();
+        Map<String, Collection<Cell>> latestCoverageData = new LinkedHashMap<>();
 
         try {
             Document orderByDataTimestamp = new Document();
@@ -139,17 +140,20 @@ class MongoDatabaseInstance implements DatabaseInstance {
             FindIterable<Document> foundDocuments = client.getDatabase(databaseName).getCollection(COVERAGE_DATA).find().sort(orderByDataTimestamp).limit(1);
             if (foundDocuments.iterator().hasNext()) {
                 Document document = foundDocuments.iterator().next();
-                latestCoverageData.addAll(marshaller.unmarshall(document));
+                latestCoverageData.putAll(marshaller.unmarshall(document));
+
+                long loadedCells = 0L;
+                for (Collection<Cell> cells : latestCoverageData.values()) {
+                    loadedCells = loadedCells + cells.size();
+                }
+
+                LOG.info("Loaded [{}] cells from previously saved state at [{}]", loadedCells, document.get("dataTimestamp"));
             }
         } catch (MongoException e) {
             logAndTransformException(e);
         }
 
-        if (!latestCoverageData.isEmpty()) {
-            Helper.firstMessage = latestCoverageData.get(0).getFixedWidthSpans().values().iterator().next().getFirstMessage();
-        }
-
-        return Collections.unmodifiableList(latestCoverageData);
+        return Collections.unmodifiableMap(latestCoverageData);
     }
 
     void setMongoClientOptions(MongoClientOptions mongoClientOptions) {

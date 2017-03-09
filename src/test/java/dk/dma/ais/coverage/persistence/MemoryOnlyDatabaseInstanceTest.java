@@ -1,11 +1,12 @@
 package dk.dma.ais.coverage.persistence;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -17,7 +18,7 @@ public class MemoryOnlyDatabaseInstanceTest {
     public void whenSave_thenNullPersistenceResultIsReturned() {
         DatabaseInstance databaseInstance = new MemoryOnlyDatabaseInstance();
 
-        PersistenceResult persistenceResult = databaseInstance.save(emptyList());
+        PersistenceResult persistenceResult = databaseInstance.save(emptyMap());
 
         assertThat(persistenceResult, is(nullValue()));
     }
@@ -26,7 +27,7 @@ public class MemoryOnlyDatabaseInstanceTest {
     public void whenLoadLatestSavedCoverageData_thenEmptyListIsReturned() {
         DatabaseInstance databaseInstance = new MemoryOnlyDatabaseInstance();
 
-        List<Cell> coverageData = databaseInstance.loadLatestSavedCoverageData();
+        Map<String, Collection<Cell>> coverageData = databaseInstance.loadLatestSavedCoverageData();
 
         assertThat(coverageData.isEmpty(), is(true));
     }

@@ -14,9 +14,14 @@
  */
 package dk.dma.ais.coverage;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
+import org.apache.commons.collections4.IterableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,10 +91,18 @@ public final class AisCoverage {
     }
 
     private void loadCoverageDataFromDatabase() {
-        List<Cell> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
+        Map<String, Collection<Cell>> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
 
-        for (Cell cell : loadedCoverageData) {
-            handler.getDataHandler().updateCell(cell);
+        for (String sourceId : loadedCoverageData.keySet()) {
+            for (Cell cell : loadedCoverageData.get(sourceId)) {
+                handler.getDataHandler().updateCell(sourceId, cell);
+
+                List<Long> timeSpanIds = IterableUtils.toList(cell.getFixedWidthSpans().keySet());
+                Collections.sort(timeSpanIds);
+                if (Helper.firstMessage != null && (Helper.firstMessage.getTime() > timeSpanIds.get(0))) {
+                    Helper.firstMessage = new Date(timeSpanIds.get(0));
+                }
+            }
         }
     }
 

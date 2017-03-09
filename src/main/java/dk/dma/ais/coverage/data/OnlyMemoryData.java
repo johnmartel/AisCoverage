@@ -69,13 +69,44 @@ public class OnlyMemoryData implements ICoverageData {
     }
 
     @Override
-    public void updateCell(Cell newCell) {
-        Source superSource = getSource(AbstractCalculator.SUPERSOURCE_MMSI);
-        Cell oldCell = superSource.getCell(newCell.getLatitude(), newCell.getLongitude());
-        if (oldCell == null) {
-            oldCell = superSource.createCell(newCell.getLatitude(), newCell.getLongitude());
+    public void updateCell(String sourceId, Cell newCell) {
+        Source source = getSource(sourceId);
+        if (source == null) {
+            source = createSource(sourceId);
         }
-        oldCell.setFixedWidthSpans(newCell.getFixedWidthSpans());
+
+        Cell oldCell = source.getCell(newCell.getLatitude(), newCell.getLongitude());
+        if (oldCell == null) {
+            source.addCell(newCell);
+        } else {
+            updateExistingCellFromNewCell(oldCell, newCell);
+        }
+    }
+
+    private void updateExistingCellFromNewCell(Cell oldCell, Cell newCell) {
+        oldCell.addNOofMissingSignals(newCell.getNOofMissingSignals());
+        oldCell.addReceivedSignals(newCell.getNOofReceivedSignals());
+
+        updateCellTimeSpans(oldCell, newCell);
+    }
+
+    private void updateCellTimeSpans(Cell oldCell, Cell newCell) {
+        for (Entry<Long, TimeSpan> newTimeSpan : newCell.getFixedWidthSpans().entrySet()) {
+            if (!oldCell.getFixedWidthSpans().containsKey(newTimeSpan.getKey())) {
+                oldCell.getFixedWidthSpans().put(newTimeSpan.getKey(), newTimeSpan.getValue());
+            } else {
+                TimeSpan oldTimeSpan = oldCell.getFixedWidthSpans().get(newTimeSpan.getKey());
+
+                TimeSpan updatedTimeSpan = new TimeSpan(oldTimeSpan.getFirstMessage());
+                updatedTimeSpan.setLastMessage(oldTimeSpan.getLastMessage());
+                updatedTimeSpan.setMessageCounterSat(oldTimeSpan.getMessageCounterSat() + newTimeSpan.getValue().getMessageCounterSat());
+                updatedTimeSpan.setMessageCounterTerrestrial(oldTimeSpan.getMessageCounterTerrestrial() + newTimeSpan.getValue().getMessageCounterTerrestrial());
+                updatedTimeSpan.setMessageCounterTerrestrialUnfiltered(oldTimeSpan.getMessageCounterTerrestrialUnfiltered() + newTimeSpan.getValue().getMessageCounterTerrestrialUnfiltered());
+                updatedTimeSpan.setMissingSignals(oldTimeSpan.getMissingSignals() + newTimeSpan.getValue().getMissingSignals());
+
+                oldCell.getFixedWidthSpans().put(newTimeSpan.getKey(), updatedTimeSpan);
+            }
+        }
     }
 
     @Override
@@ -201,6 +232,7 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.setMessageCounterTerrestrial(ts.getMessageCounterTerrestrial() + 1);
+        cell.incrementNOofReceivedSignals();
     }
 
     @Override
@@ -219,6 +251,7 @@ public class OnlyMemoryData implements ICoverageData {
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
         ts.incrementMissingSignals();
+        cell.incrementNOofMissingSignals();
     }
 
     public CustomMessage packetToCustomMessage(AisPacket packet) {

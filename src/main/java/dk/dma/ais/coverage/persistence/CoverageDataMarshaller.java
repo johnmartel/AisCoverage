@@ -1,7 +1,8 @@
 package dk.dma.ais.coverage.persistence;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
 import dk.dma.ais.coverage.data.Cell;
 
@@ -10,7 +11,7 @@ import dk.dma.ais.coverage.data.Cell;
  */
 interface CoverageDataMarshaller<T> {
 
-    T marshall(List<Cell> coverageData, ZonedDateTime dataTimestamp);
+    T marshall(Map<String, Collection<Cell>> coverageData, ZonedDateTime dataTimestamp);
 
-    List<Cell> unmarshall(T coverageData);
+    Map<String, Collection<Cell>> unmarshall(T coverageData);
 }

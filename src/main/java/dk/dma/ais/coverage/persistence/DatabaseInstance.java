@@ -1,6 +1,7 @@
 package dk.dma.ais.coverage.persistence;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
@@ -33,13 +34,13 @@ public interface DatabaseInstance extends AutoCloseable {
      * Saves the coverage data stored in in-memory cells to the underlying database.
      *
      * @param coverageData
-     *      the coverage data stored in a {@link List} of {@link Cell}, as provided by {@link dk.dma.ais.coverage.data.ICoverageData}
+     *      the coverage data stored as a {@link Collection} of {@link Cell} by source identifier
      * @return
      *      the result of the save operation
      * @throws DatabaseConnectionException
      *      when connection to the database server is impossible for any reason
      */
-    PersistenceResult save(List<Cell> coverageData);
+    PersistenceResult save(Map<String, Collection<Cell>> coverageData);
 
-    List<Cell> loadLatestSavedCoverageData();
+    Map<String, Collection<Cell>> loadLatestSavedCoverageData();
 }

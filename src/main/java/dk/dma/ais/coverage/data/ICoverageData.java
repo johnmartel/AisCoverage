@@ -30,7 +30,7 @@ public interface ICoverageData {
     void updateShip(Ship ship);
     Cell createCell(String sourceMmsi, double lat, double lon);
     Cell getCell(String sourceMmsi, double lat, double lon);
-    void updateCell(Cell c);
+    void updateCell(String sourceId, Cell newCell);
     List<Cell> getCells(QueryParams params);
     Source getSource(String sourceId);
     Source createSource(String sourceId);
@@ -38,5 +38,4 @@ public interface ICoverageData {
     void incrementReceivedSignals(String sourceMmsi, double lat, double lon, Date timestamp);
     void incrementMissingSignals(String sourceMmsi, double lat, double lon, Date timestamp);
     void trimWindow(Date trimPoint);
-
 }

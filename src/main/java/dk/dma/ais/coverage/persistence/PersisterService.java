@@ -1,5 +1,8 @@
 package dk.dma.ais.coverage.persistence;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -7,7 +10,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.data.ICoverageData;
+import dk.dma.ais.coverage.data.Source;
 
 /**
  * Performs asynchronous save operation to configured database.
@@ -65,7 +70,12 @@ public class PersisterService {
 
         @Override
         public void run() {
-            PersistenceResult persistenceResult = databaseInstance.save(coverageData.getCells(null));
+            Map<String, Collection<Cell>> cellsBySource = new LinkedHashMap<>();
+            for (Source source : coverageData.getSources()) {
+                cellsBySource.put(source.getIdentifier(), source.getGrid().values());
+            }
+
+            PersistenceResult persistenceResult = databaseInstance.save(cellsBySource);
 
             if (PersistenceResult.Status.SUCCESS.equals(persistenceResult.getStatus())) {
                 LOG.info("Saved [{}] cells to MongoDB database", persistenceResult.getWrittenCells());

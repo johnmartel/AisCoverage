@@ -33,6 +33,7 @@
 		<addr>localhost</addr>
 		<dbName>nordicCoverage</dbName>
 		<port>27017</port>
+		<persistenceIntervalInSeconds>30</persistenceIntervalInSeconds>
 	</databaseConfiguration>
 
 	<!--Access the frontend via http://localhost:8090/coverage -->

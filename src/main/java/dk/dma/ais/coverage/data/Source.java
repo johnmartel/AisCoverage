@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.data.Ship.ShipClass;
 
 public class Source implements Serializable {
 
@@ -100,6 +99,10 @@ public class Source implements Serializable {
         grid.put(cell.getId(), cell);
 
         return cell;
+    }
+
+    public void addCell(Cell cell) {
+        grid.put(cell.getId(), cell);
     }
 
     public Map<String, Cell> getGrid() {

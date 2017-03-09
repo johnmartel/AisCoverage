@@ -2,30 +2,46 @@ package dk.dma.ais.coverage.persistence;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.closeTo;
 import static org.junit.Assert.assertThat;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.bson.Document;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
 import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.data.TimeSpan;
 import dk.dma.ais.coverage.fixture.CellFixture;
 
 public class MongoCoverageDataMarshallerTest {
+    private static final double DELTA_WHEN_COMPARING_DOUBLE = 0.0001D;
     private MongoCoverageDataMarshaller marshaller;
 
     @Before
     public void setUp() throws Exception {
         marshaller = new MongoCoverageDataMarshaller();
+
+        Helper.conf = new AisCoverageConfiguration();
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Helper.conf = null;
+
     }
 
     @Test
@@ -36,7 +52,7 @@ public class MongoCoverageDataMarshallerTest {
 
         assertThatDocumentHasEmptyCellsAndDataTimestamp(marshalledCoverageData, now);
 
-        marshalledCoverageData = marshaller.marshall(Collections.emptyList(), now);
+        marshalledCoverageData = marshaller.marshall(Collections.emptyMap(), now);
 
         assertThatDocumentHasEmptyCellsAndDataTimestamp(marshalledCoverageData, now);
     }
@@ -56,8 +72,10 @@ public class MongoCoverageDataMarshallerTest {
         Cell secondCell = CellFixture.createCellWithNoTimeSpan();
         cells.add(firstCell);
         cells.add(secondCell);
+        Map<String, Collection<Cell>> cellsBySourceId = new LinkedHashMap<>();
+        cellsBySourceId.put("default", cells);
 
-        Document marshalledCoverageData = marshaller.marshall(cells, now);
+        Document marshalledCoverageData = marshaller.marshall(cellsBySourceId, now);
 
         ZonedDateTime dataTimestamp = ZonedDateTime.parse((String) marshalledCoverageData.get("dataTimestamp"), DateTimeFormatter.ISO_DATE_TIME);
         assertThat(dataTimestamp, is(equalTo(now)));
@@ -96,7 +114,7 @@ public class MongoCoverageDataMarshallerTest {
 
     @Test
     public void givenNoCoverageData_whenUnmarshall_thenEmptyListIsReturned() {
-        List<Cell> coverageData = marshaller.unmarshall(null);
+        Map<String, Collection<Cell>> coverageData = marshaller.unmarshall(null);
         assertThat(coverageData.isEmpty(), is(true));
 
         coverageData = marshaller.unmarshall(new Document());
@@ -116,16 +134,19 @@ public class MongoCoverageDataMarshallerTest {
         Cell secondCell = CellFixture.createCellWithNoTimeSpan();
         cells.add(firstCell);
         cells.add(secondCell);
-        Document marshalledCoverageData = marshaller.marshall(cells, now);
+        Map<String, Collection<Cell>> cellsBySourceId = new LinkedHashMap<>();
+        cellsBySourceId.put("default", cells);
+        Document marshalledCoverageData = marshaller.marshall(cellsBySourceId, now);
 
-        List<Cell> unmarshalledCoverageData = marshaller.unmarshall(marshalledCoverageData);
+        Map<String, Collection<Cell>> unmarshalledCoverageData = marshaller.unmarshall(marshalledCoverageData);
 
-        assertThat(unmarshalledCoverageData.size(), is(equalTo(2)));
+        assertThat(unmarshalledCoverageData.get("default").size(), is(equalTo(2)));
 
-        Cell firstUnmarshalledCell = unmarshalledCoverageData.get(0);
+        Iterator<Cell> cellsFromDefaultSource = unmarshalledCoverageData.get("default").iterator();
+        Cell firstUnmarshalledCell = cellsFromDefaultSource.next();
         assertThat(firstUnmarshalledCell.getId(), is(equalTo(firstCell.getId())));
-        assertThat(firstUnmarshalledCell.getLatitude(), is(equalTo(firstCell.getLatitude())));
-        assertThat(firstUnmarshalledCell.getLongitude(), is(equalTo(firstCell.getLongitude())));
+        assertThat(firstUnmarshalledCell.getLatitude(), is(closeTo(firstCell.getLatitude(), DELTA_WHEN_COMPARING_DOUBLE)));
+        assertThat(firstUnmarshalledCell.getLongitude(), is(closeTo(firstCell.getLongitude(), DELTA_WHEN_COMPARING_DOUBLE)));
 
         Map<Long, TimeSpan> firstUnmarshalledCellFixedWidthSpans = firstUnmarshalledCell.getFixedWidthSpans();
         assertThat(firstUnmarshalledCellFixedWidthSpans.size(), is(equalTo(2)));
@@ -142,10 +163,10 @@ public class MongoCoverageDataMarshallerTest {
             assertThat(unmarshalledTimeSpan.getMissingSignals(), is(equalTo(expectedTimeSpan.getMissingSignals())));
         }
 
-        Cell secondUnmarshalledCell = unmarshalledCoverageData.get(1);
+        Cell secondUnmarshalledCell = cellsFromDefaultSource.next();
         assertThat(secondUnmarshalledCell.getId(), is(equalTo(secondCell.getId())));
-        assertThat(secondUnmarshalledCell.getLatitude(), is(equalTo(secondCell.getLatitude())));
-        assertThat(secondUnmarshalledCell.getLongitude(), is(equalTo(secondCell.getLongitude())));
+        assertThat(secondUnmarshalledCell.getLatitude(), is(closeTo(secondCell.getLatitude(), DELTA_WHEN_COMPARING_DOUBLE)));
+        assertThat(secondUnmarshalledCell.getLongitude(), is(closeTo(secondCell.getLongitude(), DELTA_WHEN_COMPARING_DOUBLE)));
 
         assertThat(secondUnmarshalledCell.getFixedWidthSpans().isEmpty(), is(true));
     }

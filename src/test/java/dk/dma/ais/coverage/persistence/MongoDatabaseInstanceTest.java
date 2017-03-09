@@ -12,8 +12,10 @@ import java.net.InetSocketAddress;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.bson.Document;
 import org.junit.After;
@@ -28,6 +30,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoIterable;
 import de.bwaldvogel.mongo.MongoServer;
 import de.bwaldvogel.mongo.backend.memory.MemoryBackend;
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.fixture.CellFixture;
@@ -50,6 +54,7 @@ public class MongoDatabaseInstanceTest {
     public void setUp() throws Exception {
         marshaller = mock(CoverageDataMarshaller.class);
         databaseInstance = new MongoDatabaseInstance(marshaller);
+        Helper.conf = new AisCoverageConfiguration();
     }
 
     @After
@@ -57,6 +62,7 @@ public class MongoDatabaseInstanceTest {
         databaseInstance.close();
         closeMongoClient();
         shutdownMongoServer();
+        Helper.conf = null;
     }
 
     private void closeMongoClient() {
@@ -156,7 +162,7 @@ public class MongoDatabaseInstanceTest {
 
         Cell aCell = CellFixture.createCellWithTimeSpans();
 
-        PersistenceResult result = databaseInstance.save(Arrays.asList(aCell));
+        PersistenceResult result = databaseInstance.save(Collections.singletonMap("default", Arrays.asList(aCell)));
 
         assertThat(result.getStatus(), is(equalTo(PersistenceResult.Status.SUCCESS)));
         assertThat(result.getWrittenCells(), is(1L));
@@ -174,7 +180,7 @@ public class MongoDatabaseInstanceTest {
     public void givenDatabaseInstanceIsNotOpened_whenSave_thenIllegalStateExceptionIsThrown() {
         thrown.expect(IllegalStateException.class);
 
-        databaseInstance.save(Collections.emptyList());
+        databaseInstance.save(Collections.emptyMap());
     }
 
     @Test
@@ -190,7 +196,7 @@ public class MongoDatabaseInstanceTest {
         useStartedMongoServer();
         preCreateCollection();
 
-        List<Cell> cells = databaseInstance.loadLatestSavedCoverageData();
+        Map<String, Collection<Cell>> cells = databaseInstance.loadLatestSavedCoverageData();
 
         assertThat(cells.isEmpty(), is(true));
     }
@@ -205,14 +211,15 @@ public class MongoDatabaseInstanceTest {
         Cell anotherCell = CellFixture.createCellWithNoTimeSpan();
         List<Cell> cells = Arrays.asList(aCell, anotherCell);
         MongoCoverageDataMarshaller marshaller = new MongoCoverageDataMarshaller();
-        Document document = marshaller.marshall(cells, ZonedDateTime.now(ZoneId.of("UTC")));
+        Document document = marshaller.marshall(Collections.singletonMap("default", cells), ZonedDateTime.now(ZoneId.of("UTC")));
 
         mongoClient.getDatabase(NORDIC_COVERAGE_DATABASE).getCollection(COVERAGE_DATA_COLLECTION).insertOne(document);
 
         databaseInstance.setMarshaller(marshaller);
 
-        List<Cell> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
+        Map<String, Collection<Cell>> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
 
-        assertThat(loadedCoverageData.size(), is(equalTo(2)));
+        assertThat(loadedCoverageData.size(), is(equalTo(1)));
+        assertThat(loadedCoverageData.get("default").size(), is(equalTo(2)));
     }
 }

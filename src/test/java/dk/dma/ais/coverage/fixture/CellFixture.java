@@ -8,6 +8,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.RandomUtils;
 
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.calculator.geotools.SphereProjection;
 import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.data.TimeSpan;
 
@@ -23,11 +25,19 @@ public class CellFixture {
     }
 
     private static Cell createCell() {
-        double latitude = RandomUtils.nextDouble();
-        double longitude = RandomUtils.nextDouble();
-        String cellId = latitude + "_" + longitude;
+        double latitude = randomLatitude();
+        double longitude = randomLongitude(latitude);
+        String cellId = Helper.getCellId(latitude, longitude, 1);
 
         return new Cell(latitude, longitude, cellId);
+    }
+
+    public static double randomLatitude() {
+        return Helper.roundLat(SphereProjection.metersToLatDegree(RandomUtils.nextDouble()), 1);
+    }
+
+    public static double randomLongitude(double latitude) {
+        return Helper.roundLon(SphereProjection.metersToLonDegree(latitude, RandomUtils.nextDouble()), 1);
     }
 
     private static Map<Long, TimeSpan> createTimeSpans() {
