@@ -1,18 +1,17 @@
 package dk.dma.ais.coverage.persistence;
 
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.ICoverageData;
+import dk.dma.ais.coverage.data.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.ICoverageData;
-import dk.dma.ais.coverage.data.Source;
 
 /**
  * Performs asynchronous save operation to configured database.
@@ -22,8 +21,8 @@ public class PersisterService {
 
     private final DatabaseInstance databaseInstance;
     private final ICoverageData coverageData;
-    private long persistenceIntervalInSeconds = 60;
-    private ScheduledExecutorService executor;
+    private long persistenceIntervalInMinutes = 60;
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
 
     public PersisterService(DatabaseInstance databaseInstance, ICoverageData coverageData) {
         this.databaseInstance = databaseInstance;
@@ -31,10 +30,9 @@ public class PersisterService {
     }
 
     public void start() {
-        LOG.info("Starting PersisterService, persisting every [{}] seconds", persistenceIntervalInSeconds);
+        LOG.info("Starting PersisterService, persisting every [{}] minutes", persistenceIntervalInMinutes);
 
-        executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate(new SaveOperation(), persistenceIntervalInSeconds, persistenceIntervalInSeconds, TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(new SaveOperation(), persistenceIntervalInMinutes, persistenceIntervalInMinutes, TimeUnit.MINUTES);
 
         LOG.info("PersisterService started");
     }
@@ -44,9 +42,9 @@ public class PersisterService {
 
         executor.shutdown();
         try {
-            if (!executor.awaitTermination(persistenceIntervalInSeconds, TimeUnit.SECONDS)) {
+            if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
-                if (!executor.awaitTermination(persistenceIntervalInSeconds, TimeUnit.SECONDS)) {
+                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
                     LOG.warn("PersisterService thread pool did not terminate cleanly");
                 }
             }
@@ -58,12 +56,16 @@ public class PersisterService {
         LOG.info("PersisterService stopped");
     }
 
-    public void intervalInSeconds(long persistenceIntervalInSeconds) {
-        this.persistenceIntervalInSeconds = persistenceIntervalInSeconds;
+    public void intervalInMinutes(long persistenceIntervalInMinutes) {
+        this.persistenceIntervalInMinutes = persistenceIntervalInMinutes;
     }
 
-    long getIntervalInSeconds() {
-        return persistenceIntervalInSeconds;
+    long getIntervalInMinutes() {
+        return persistenceIntervalInMinutes;
+    }
+
+    void setExecutor(ScheduledExecutorService executor) {
+        this.executor = executor;
     }
 
     private class SaveOperation implements Runnable {

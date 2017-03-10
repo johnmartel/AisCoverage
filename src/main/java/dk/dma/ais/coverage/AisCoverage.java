@@ -115,7 +115,7 @@ public final class AisCoverage {
 
     private void createPersisterService() {
         persisterService = new PersisterService(databaseInstance, handler.getDataHandler());
-        persisterService.intervalInSeconds(conf.getDatabaseConfiguration().getPersistenceIntervalInSeconds());
+        persisterService.intervalInMinutes(conf.getDatabaseConfiguration().getPersistenceIntervalInMinutes());
     }
 
     public void start() {

@@ -19,7 +19,7 @@ public class DatabaseConfiguration {
     private String dbName = "nordicCoverage";
     private String addr = "localhost";
     private int port = 5000;
-    private int persistenceIntervalInSeconds = 60;
+    private int persistenceIntervalInMinutes = 60;
 
     public String getType() {
         return type;
@@ -53,11 +53,11 @@ public class DatabaseConfiguration {
         this.port = port;
     }
 
-    public int getPersistenceIntervalInSeconds() {
-        return persistenceIntervalInSeconds;
+    public int getPersistenceIntervalInMinutes() {
+        return persistenceIntervalInMinutes;
     }
 
-    public void setPersistenceIntervalInSeconds(int persistenceIntervalInSeconds) {
-        this.persistenceIntervalInSeconds = persistenceIntervalInSeconds;
+    public void setPersistenceIntervalInMinutes(int persistenceIntervalInMinutes) {
+        this.persistenceIntervalInMinutes = persistenceIntervalInMinutes;
     }
 }
