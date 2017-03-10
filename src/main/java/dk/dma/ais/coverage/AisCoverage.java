@@ -14,17 +14,6 @@
  */
 package dk.dma.ais.coverage;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-
-import org.apache.commons.collections4.IterableUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dk.dma.ais.bus.AisBus;
 import dk.dma.ais.bus.consumer.DistributerConsumer;
 import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
@@ -38,6 +27,16 @@ import dk.dma.ais.packet.AisPacket;
 import dk.dma.ais.reader.AisReader;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
+import org.apache.commons.collections4.IterableUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 
 /**
@@ -97,12 +96,20 @@ public final class AisCoverage {
             for (Cell cell : loadedCoverageData.get(sourceId)) {
                 handler.getDataHandler().updateCell(sourceId, cell);
 
-                List<Long> timeSpanIds = IterableUtils.toList(cell.getFixedWidthSpans().keySet());
-                Collections.sort(timeSpanIds);
-                if (Helper.firstMessage != null && (Helper.firstMessage.getTime() > timeSpanIds.get(0))) {
-                    Helper.firstMessage = new Date(timeSpanIds.get(0));
-                }
+                adjustSystemEarliestMessageFromCell(cell);
             }
+        }
+    }
+
+    private void adjustSystemEarliestMessageFromCell(Cell cell) {
+        List<Long> timeSpanIds = IterableUtils.toList(cell.getFixedWidthSpans().keySet());
+        Collections.sort(timeSpanIds);
+        Long earliestTimeSpanId = timeSpanIds.get(0);
+
+        if (Helper.firstMessage == null) {
+            Helper.firstMessage = new Date(earliestTimeSpanId.longValue());
+        } else if (Helper.firstMessage.getTime() > earliestTimeSpanId) {
+            Helper.firstMessage = new Date(earliestTimeSpanId);
         }
     }
 
