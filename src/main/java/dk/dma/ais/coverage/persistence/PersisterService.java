@@ -6,6 +6,8 @@ import dk.dma.ais.coverage.data.Source;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -72,18 +74,22 @@ public class PersisterService {
 
         @Override
         public void run() {
+            Instant start = Instant.now();
             Map<String, Collection<Cell>> cellsBySource = new LinkedHashMap<>();
             for (Source source : coverageData.getSources()) {
                 cellsBySource.put(source.getIdentifier(), source.getGrid().values());
             }
 
             PersistenceResult persistenceResult = databaseInstance.save(cellsBySource);
+            Instant end = Instant.now();
 
             if (PersistenceResult.Status.SUCCESS.equals(persistenceResult.getStatus())) {
                 LOG.info("Saved [{}] cells to MongoDB database", persistenceResult.getWrittenCells());
             } else {
                 LOG.info("Failed saving cells to MongoDB database");
             }
+
+            LOG.info("Save operation took [{}] ms", Duration.between(start, end).toMillis());
         }
     }
 }

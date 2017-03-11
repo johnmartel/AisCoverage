@@ -31,6 +31,8 @@ import org.apache.commons.collections4.IterableUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -90,7 +92,10 @@ public final class AisCoverage {
     }
 
     private void loadCoverageDataFromDatabase() {
+        Instant start = Instant.now();
         Map<String, Collection<Cell>> loadedCoverageData = databaseInstance.loadLatestSavedCoverageData();
+        Instant databaseEnd = Instant.now();
+        LOG.info("Loading coverage data from database took [{}] ms", Duration.between(start, databaseEnd).toMillis());
 
         for (String sourceId : loadedCoverageData.keySet()) {
             for (Cell cell : loadedCoverageData.get(sourceId)) {
@@ -99,6 +104,8 @@ public final class AisCoverage {
                 adjustSystemEarliestMessageFromCell(cell);
             }
         }
+        Instant end = Instant.now();
+        LOG.info("Loading coverage data and converting to memory structure took [{}] ms", Duration.between(start, end).toMillis());
     }
 
     private void adjustSystemEarliestMessageFromCell(Cell cell) {
