@@ -28,6 +28,9 @@
 	<logger name="dk.dma.ais.reader">
 		<level value="ERROR" />
 	</logger>
+	<logger name="org.mongodb">
+		<level value="ERROR" />
+	</logger>
 
 	<root>
 		<appender-ref ref="CONSOLE" />
@@ -35,5 +38,4 @@
 	</root>
 
 </log4j:configuration>
-	
 	
