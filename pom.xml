@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>dk.dma.ais.lib</groupId>
 			<artifactId>ais-lib-communication</artifactId>
-			<version>2.2</version>
+			<version>2.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>dk.dma.commons</groupId>
@@ -139,6 +139,11 @@
 	</dependencies>
 
 	<repositories>
+		<repository>
+			<id>dma-snapshots</id>
+			<name>Dma Snapshot Repository</name>
+			<url>http://repository-dma.forge.cloudbees.com/snapshot/</url>
+		</repository>
 		<repository>
 			<id>dma-releases</id>
 			<name>Dma Release Repository</name>
