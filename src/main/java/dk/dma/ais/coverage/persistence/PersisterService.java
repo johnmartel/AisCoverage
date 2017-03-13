@@ -24,7 +24,7 @@ public class PersisterService {
     private final DatabaseInstance databaseInstance;
     private final ICoverageData coverageData;
     private long persistenceIntervalInMinutes = 60;
-    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+    private ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public PersisterService(DatabaseInstance databaseInstance, ICoverageData coverageData) {
         this.databaseInstance = databaseInstance;
