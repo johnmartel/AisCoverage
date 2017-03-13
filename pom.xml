@@ -11,7 +11,7 @@
 
 	<groupId>dk.dma.ais</groupId>
 	<artifactId>ais-coverage</artifactId>
-	<version>0.2.2-CCG</version>
+	<version>0.3.0-CCG</version>
 	<name>AIS coverage analyzer</name>
 	<description>AIS coverage analyzer</description>
 
