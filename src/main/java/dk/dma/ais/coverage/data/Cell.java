@@ -21,9 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Cell {
-
     private int NOofReceivedSignals;
     private int NOofMissingSignals;
+    private int numberOfVsiMessages;
+    private int averageSignalStrength;
     private double latitude;
     private double longitude;
     private List<TimeSpan> timeSpans;
@@ -55,19 +56,29 @@ public class Cell {
         this.longitude = lon;
     }
 
-    public void incrementNOofReceivedSignals() {
+    public synchronized void incrementNOofReceivedSignals() {
         NOofReceivedSignals++;
     }
 
-    public void incrementNOofMissingSignals() {
+    public synchronized void incrementNOofMissingSignals() {
         NOofMissingSignals++;
     }
 
-    public long getTotalNumberOfMessages() {
+    public synchronized void incrementNumberOfVsiMessages(int signalStrength) {
+        int incrementedNumberOfVsiMessages = numberOfVsiMessages + 1;
+        averageSignalStrength = computeAverageSignalStrength(signalStrength, incrementedNumberOfVsiMessages);
+        numberOfVsiMessages = incrementedNumberOfVsiMessages;
+    }
+
+    private int computeAverageSignalStrength(int signalStrength, int incrementedNumberOfVsiMessages) {
+        return Math.floorDiv((numberOfVsiMessages * averageSignalStrength) + signalStrength, incrementedNumberOfVsiMessages);
+    }
+
+    public synchronized long getTotalNumberOfMessages() {
         return NOofReceivedSignals + NOofMissingSignals;
     }
 
-    public double getCoverage() {
+    public synchronized double getCoverage() {
         return (double) NOofReceivedSignals / (double) getTotalNumberOfMessages();
     }
 
@@ -91,11 +102,11 @@ public class Cell {
         return this.latitude + "_" + this.longitude;
     }
 
-    public int getNOofReceivedSignals(Date starttime, Date endTime) {
+    public synchronized int getNOofReceivedSignals(Date starttime, Date endTime) {
         int result = 0;
         Collection<TimeSpan> spans = fixedWidthSpans.values();
-        for (TimeSpan timeSpan : spans) {
 
+        for (TimeSpan timeSpan : spans) {
             if (timeSpan.getFirstMessage().getTime() >= starttime.getTime()
                     && timeSpan.getLastMessage().getTime() <= endTime.getTime()) {
 
@@ -106,36 +117,83 @@ public class Cell {
         return result;
     }
 
-    public int getNOofMissingSignals(Date starttime, Date endTime) {
+    public synchronized int getNOofMissingSignals(Date starttime, Date endTime) {
         int result = 0;
         Collection<TimeSpan> spans = fixedWidthSpans.values();
+
         for (TimeSpan timeSpan : spans) {
             if (timeSpan.getFirstMessage().getTime() >= starttime.getTime()
                     && timeSpan.getLastMessage().getTime() <= endTime.getTime()) {
                 result = result + timeSpan.getMissingSignals();
             }
         }
+
         return result;
     }
 
-    public int getNOofReceivedSignals() {
+    public synchronized int getNOofReceivedSignals() {
         return this.NOofReceivedSignals;
     }
 
-    public int getNOofMissingSignals() {
+    public synchronized int getNOofMissingSignals() {
         return this.NOofMissingSignals;
     }
 
-    public void addReceivedSignals(int amount) {
+    public synchronized void addReceivedSignals(int amount) {
         this.NOofReceivedSignals += amount;
     }
 
-    public void addNOofMissingSignals(int amount) {
+    public synchronized void addNOofMissingSignals(int amount) {
         this.NOofMissingSignals += amount;
     }
 
-    public void setNoofMissingSignals(int amount) {
+    public synchronized void setNoofMissingSignals(int amount) {
         this.NOofMissingSignals = amount;
     }
 
+    public synchronized int getNumberOfVsiMessages() {
+        return numberOfVsiMessages;
+    }
+
+    public synchronized int getAverageSignalStrength() {
+        return averageSignalStrength;
+    }
+
+    public synchronized int getNumberOfVsiMessages(Date startTime, Date endTime) {
+        int result = 0;
+        Collection<TimeSpan> spans = fixedWidthSpans.values();
+
+        for (TimeSpan timeSpan : spans) {
+            if (timeSpan.getFirstMessage().getTime() >= startTime.getTime()
+                    && timeSpan.getLastMessage().getTime() <= endTime.getTime()) {
+
+                result = result + timeSpan.getVsiMessageCounter();
+            }
+        }
+
+        return result;
+    }
+
+    public synchronized int getAverageSignalStrength(Date startTime, Date endTime) {
+        int summedAverageSignalStrength = 0;
+        int numberOfVsiMessages = getNumberOfVsiMessages(startTime, endTime);
+        Collection<TimeSpan> spans = fixedWidthSpans.values();
+
+        for (TimeSpan timeSpan : spans) {
+            if (timeSpan.getFirstMessage().getTime() >= startTime.getTime()
+                    && timeSpan.getLastMessage().getTime() <= endTime.getTime()) {
+
+                int currentTimeSpanTotalSignalStrength = timeSpan.getAverageSignalStrength() * timeSpan.getVsiMessageCounter();
+                summedAverageSignalStrength = summedAverageSignalStrength + currentTimeSpanTotalSignalStrength;
+            }
+        }
+
+        return Math.floorDiv(summedAverageSignalStrength, numberOfVsiMessages);
+    }
+
+    public synchronized void addVsiMessages(int numberOfVsiMessages, int averageSignalStrength) {
+        int incrementedNumberOfVsiMessages = this.numberOfVsiMessages + numberOfVsiMessages;
+        this.averageSignalStrength = computeAverageSignalStrength(numberOfVsiMessages * averageSignalStrength, incrementedNumberOfVsiMessages);
+        this.numberOfVsiMessages = incrementedNumberOfVsiMessages;
+    }
 }

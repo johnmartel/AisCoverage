@@ -26,6 +26,8 @@ public class TimeSpan {
     private int messageCounterTerrestrial;
     private int missingSignals;
     private int messageCounterTerrestrialUnfiltered;
+    private int vsiMessageCounter;
+    private int averageSignalStrength;
 
     public int getMessageCounterTerrestrialUnfiltered() {
         return messageCounterTerrestrialUnfiltered;
@@ -100,16 +102,41 @@ public class TimeSpan {
         this.messageCounterSat = messageCounter;
     }
 
-    public void add(TimeSpan span2) {
-        this.setMessageCounterSat(this.getMessageCounterSat() + span2.getMessageCounterSat());
-        this.setMessageCounterTerrestrial(this.getMessageCounterTerrestrial() + span2.getMessageCounterTerrestrial());
-        this.addMessageCounterTerrestrialUnfiltered(span2.getMessageCounterTerrestrialUnfiltered());
-        for (String s : span2.distinctShipsSat.keySet()) {
+    public int getVsiMessageCounter() {
+        return vsiMessageCounter;
+    }
+
+    public void setVsiMessageCounter(int vsiMessageCounter) {
+        this.vsiMessageCounter = vsiMessageCounter;
+    }
+
+    public int getAverageSignalStrength() {
+        return averageSignalStrength;
+    }
+
+    public void setAverageSignalStrength(int averageSignalStrength) {
+        this.averageSignalStrength = averageSignalStrength;
+    }
+
+    public void add(TimeSpan other) {
+        this.setMessageCounterSat(this.getMessageCounterSat() + other.getMessageCounterSat());
+        this.setMessageCounterTerrestrial(this.getMessageCounterTerrestrial() + other.getMessageCounterTerrestrial());
+        this.addMessageCounterTerrestrialUnfiltered(other.getMessageCounterTerrestrialUnfiltered());
+        this.setAverageSignalStrength(sumAverageSignalStrength(other));
+        this.setVsiMessageCounter(this.getVsiMessageCounter() + other.getVsiMessageCounter());
+        for (String s : other.distinctShipsSat.keySet()) {
             this.distinctShipsSat.put(s, true);
         }
-        for (String s : span2.distinctShipsTerrestrial.keySet()) {
+        for (String s : other.distinctShipsTerrestrial.keySet()) {
             this.distinctShipsTerrestrial.put(s, true);
         }
+    }
+
+    private int sumAverageSignalStrength(TimeSpan other) {
+        int thisAggregatedSignalStrength = this.getVsiMessageCounter() * this.getAverageSignalStrength();
+        int otherAggregatedSignalStrength = other.getVsiMessageCounter() * other.getAverageSignalStrength();
+        int summedVsiMessageCounters = this.getVsiMessageCounter() + other.getVsiMessageCounter();
+        return Math.floorDiv(thisAggregatedSignalStrength + otherAggregatedSignalStrength, summedVsiMessageCounters);
     }
 
     public TimeSpan copy() {
@@ -118,6 +145,8 @@ public class TimeSpan {
         copy.setMessageCounterSat(this.getMessageCounterSat());
         copy.setMessageCounterTerrestrial(this.getMessageCounterTerrestrial());
         copy.setMessageCounterTerrestrialUnfiltered(this.messageCounterTerrestrialUnfiltered);
+        copy.setVsiMessageCounter(this.getVsiMessageCounter());
+        copy.setAverageSignalStrength(this.getAverageSignalStrength());
         for (String s : this.distinctShipsSat.keySet()) {
             copy.distinctShipsSat.put(s, true);
         }
