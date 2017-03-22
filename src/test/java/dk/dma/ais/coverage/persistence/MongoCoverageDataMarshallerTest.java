@@ -1,31 +1,37 @@
 package dk.dma.ais.coverage.persistence;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.Matchers.closeTo;
-import static org.junit.Assert.assertThat;
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.TimeSpan;
+import dk.dma.ais.coverage.fixture.CellFixture;
+import org.apache.commons.io.IOUtils;
+import org.bson.Document;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
-import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.TimeSpan;
-import dk.dma.ais.coverage.fixture.CellFixture;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.closeTo;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 public class MongoCoverageDataMarshallerTest {
     private static final double DELTA_WHEN_COMPARING_DOUBLE = 0.0001D;
@@ -41,7 +47,6 @@ public class MongoCoverageDataMarshallerTest {
     @After
     public void tearDown() throws Exception {
         Helper.conf = null;
-
     }
 
     @Test
@@ -60,7 +65,23 @@ public class MongoCoverageDataMarshallerTest {
     private void assertThatDocumentHasEmptyCellsAndDataTimestamp(Document marshalledCoverageData, ZonedDateTime now) {
         ZonedDateTime dataTimestamp = ZonedDateTime.parse((String) marshalledCoverageData.get("dataTimestamp"), DateTimeFormatter.ISO_DATE_TIME);
         assertThat(dataTimestamp, is(equalTo(now)));
-        assertThat(((List<Map<String, Object>>) marshalledCoverageData.get("cells")).isEmpty(), is(true));
+
+        Document decompressedCells = decompressCells(marshalledCoverageData);
+        assertThat(((List<Map<String, Object>>) decompressedCells.get("cells")).isEmpty(), is(true));
+    }
+
+    private Document decompressCells(Document marshalledCoverageData) {
+        String base64 = (String) marshalledCoverageData.get("compressedCells");
+        byte[] gzippedData = Base64.getDecoder().decode(base64.getBytes(StandardCharsets.US_ASCII));
+
+        try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(gzippedData))) {
+            String jsonData = IOUtils.toString(gzipInputStream, StandardCharsets.US_ASCII);
+            return Document.parse(jsonData);
+        } catch (IOException e) {
+            fail("Failed decompressing cells: " + e.getMessage());
+        }
+
+        return null;
     }
 
     @Test
@@ -80,7 +101,8 @@ public class MongoCoverageDataMarshallerTest {
         ZonedDateTime dataTimestamp = ZonedDateTime.parse((String) marshalledCoverageData.get("dataTimestamp"), DateTimeFormatter.ISO_DATE_TIME);
         assertThat(dataTimestamp, is(equalTo(now)));
 
-        List<Map<String, Object>> grid = (List<Map<String, Object>>) marshalledCoverageData.get("cells");
+        Document decompressedCells = decompressCells(marshalledCoverageData);
+        List<Map<String, Object>> grid = (List<Map<String, Object>>) decompressedCells.get("cells");
         assertThat(grid.size(), is(equalTo(2)));
 
         Map<String, Object> firstMarshalledCell = grid.get(0);

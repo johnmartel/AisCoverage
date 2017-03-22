@@ -1,21 +1,29 @@
 package dk.dma.ais.coverage.persistence;
 
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.TimeSpan;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.bson.Document;
-
-import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.TimeSpan;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * A {@link CoverageDataMarshaller} that marshalls coverage data in a format usable to store in a MongoDB database.
@@ -28,11 +36,16 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
 
         coverageDataDocument.put("dataTimestamp", dataTimestamp.withZoneSameInstant(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_DATE_TIME));
 
+        Document documentToBeZipped = new Document();
         List<Map<String, Object>> grid = new ArrayList<>();
         if (coverageData != null) {
             marshallCells(coverageData, grid);
         }
-        coverageDataDocument.put("cells", grid);
+        documentToBeZipped.put("cells", grid);
+
+        String compressedCells = compressCellsData(documentToBeZipped);
+        coverageDataDocument.put("compressedCells", compressedCells);
+        coverageDataDocument.put("numberOfCells", grid.size());
 
         return coverageDataDocument;
     }
@@ -78,6 +91,20 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
         return fixedWidthTimeSpans;
     }
 
+    private String compressCellsData(Document documentToBeZipped) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(byteArrayOutputStream);) {
+            gzipOutputStream.write(documentToBeZipped.toJson().getBytes(StandardCharsets.US_ASCII));
+            gzipOutputStream.close();
+
+            byte[] bytes = byteArrayOutputStream.toByteArray();
+            return new String(Base64.getEncoder().encode(bytes), StandardCharsets.US_ASCII);
+        } catch (IOException e) {
+            throw new MarshallingException("Could not compress cells data", e);
+        }
+    }
+
     @Override
     public Map<String, Collection<Cell>> unmarshall(Document coverageData) {
         Map<String, Collection<Cell>> unmarshalledCoverageData = new LinkedHashMap<>();
@@ -91,7 +118,8 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
 
     private Map<String, Collection<Cell>> unmarshallCells(Document coverageData) {
         Map<String, Collection<Cell>> unmarshalledCoverageData = new LinkedHashMap<>();
-        Object cells = coverageData.get("cells");
+        Document decompressedCells = decompressCells(coverageData);
+        Object cells = decompressedCells.get("cells");
 
         if (cells != null && (cells instanceof List)) {
             List<Map<String, Object>> grid = (List<Map<String, Object>>) cells;
@@ -107,6 +135,22 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
         }
 
         return unmarshalledCoverageData;
+    }
+
+    private Document decompressCells(Document marshalledCoverageData) {
+        String base64 = (String) marshalledCoverageData.get("compressedCells");
+        if (!StringUtils.isBlank(base64)) {
+            byte[] gzippedData = Base64.getDecoder().decode(base64.getBytes(StandardCharsets.US_ASCII));
+
+            try (GZIPInputStream gzipInputStream = new GZIPInputStream(new ByteArrayInputStream(gzippedData))) {
+                String jsonData = IOUtils.toString(gzipInputStream, StandardCharsets.US_ASCII);
+                return Document.parse(jsonData);
+            } catch (IOException e) {
+                throw new MarshallingException("Could not unmarshall compressed cells data", e);
+            }
+        }
+
+        return new Document();
     }
 
     private Cell unmarshallCell(Map<String, Object> cell) {

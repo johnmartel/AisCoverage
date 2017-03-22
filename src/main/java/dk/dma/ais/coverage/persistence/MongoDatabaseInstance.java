@@ -1,17 +1,5 @@
 package dk.dma.ais.coverage.persistence;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.Document;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
@@ -20,6 +8,16 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import dk.dma.ais.coverage.configuration.DatabaseConfiguration;
 import dk.dma.ais.coverage.data.Cell;
+import org.bson.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * {@link DatabaseInstance} implementation that keeps data in a MongoDB database.
@@ -114,13 +112,13 @@ class MongoDatabaseInstance implements DatabaseInstance {
         requireOpenConnection();
 
         Document coverageDataDocument = marshaller.marshall(coverageData, ZonedDateTime.now(ZoneId.of("UTC")));
-        long numberOfSavedCells = ((List<Map<String, Object>>) coverageDataDocument.get("cells")).size();
+        long numberOfSavedCells = ((Integer) coverageDataDocument.get("numberOfCells"));
 
         try {
             client.getDatabase(databaseName).getCollection(COVERAGE_DATA).insertOne(coverageDataDocument);
             LOG.info("Saved [{}] cells with timestamp [{}]", numberOfSavedCells, coverageDataDocument.get("dataTimestamp"));
             return PersistenceResult.success(numberOfSavedCells);
-        } catch (MongoException e) {
+        } catch (MongoException | MarshallingException e) {
             logAndTransformException(e);
         }
 
@@ -149,7 +147,7 @@ class MongoDatabaseInstance implements DatabaseInstance {
 
                 LOG.info("Loaded [{}] cells from previously saved state at [{}]", loadedCells, document.get("dataTimestamp"));
             }
-        } catch (MongoException e) {
+        } catch (MongoException | MarshallingException e) {
             logAndTransformException(e);
         }
 
