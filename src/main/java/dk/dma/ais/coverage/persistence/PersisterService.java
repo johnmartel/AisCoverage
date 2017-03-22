@@ -74,16 +74,22 @@ public class PersisterService {
 
         @Override
         public void run() {
+            LOG.info("Starting save operation...");
             Instant start = Instant.now();
             Map<String, Collection<Cell>> cellsBySource = new LinkedHashMap<>();
             for (Source source : coverageData.getSources()) {
                 cellsBySource.put(source.getIdentifier(), source.getGrid().values());
             }
 
-            PersistenceResult persistenceResult = databaseInstance.save(cellsBySource);
+            PersistenceResult persistenceResult = null;
+            try {
+                persistenceResult = databaseInstance.save(cellsBySource);
+            } catch (RuntimeException e) {
+                LOG.error("Error while saving coverage data", e);
+            }
             Instant end = Instant.now();
 
-            if (PersistenceResult.Status.SUCCESS.equals(persistenceResult.getStatus())) {
+            if ((persistenceResult != null) && PersistenceResult.Status.SUCCESS.equals(persistenceResult.getStatus())) {
                 LOG.info("Saved [{}] cells to MongoDB database", persistenceResult.getWrittenCells());
             } else {
                 LOG.info("Failed saving cells to MongoDB database");
