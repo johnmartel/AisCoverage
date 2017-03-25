@@ -139,9 +139,7 @@ public abstract class AbstractCalculator implements Serializable {
     public boolean filterMessage(CustomMessage customMessage) {
 
         if (customMessage.getSog() < 0 || customMessage.getSog() > 150) {
-            return true;
-        }
-        if (customMessage.getCog() == 360) {
+            LOG.info("filtering message due to SoG: {}, lat: {}, long: {}", customMessage.getSog(), customMessage.getLatitude(), customMessage.getLongitude());
             return true;
         }
 
@@ -156,12 +154,14 @@ public abstract class AbstractCalculator implements Serializable {
             double distance = projection.distBetweenPoints(firstMessage.getLongitude(), firstMessage.getLatitude(),
                     lastMessage.getLongitude(), lastMessage.getLatitude());
             if (distance > 2000) {
+                LOG.info("filtering message due to distance: {}, lat: {}, long: {}", distance, customMessage.getLatitude(), customMessage.getLongitude());
                 return true;
             }
 
             // Filter message based on time between first and last message
             double timeDifference = this.getTimeDifference(firstMessage, lastMessage);
             if (timeDifference > 1200) {
+                LOG.info("filtering message due to time difference: {}, lat: {}, long: {}", timeDifference, customMessage.getLatitude(), customMessage.getLongitude());
                 return true;
             }
 
