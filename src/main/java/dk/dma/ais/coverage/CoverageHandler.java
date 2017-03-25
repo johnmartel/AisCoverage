@@ -38,7 +38,8 @@ import dk.dma.ais.packet.AisPacket;
  */
 public class CoverageHandler {
     private static final Logger LOG = LoggerFactory.getLogger(CoverageHandler.class);
-    
+    public static final int MESSAGE_BUFFER_SIZE = 10000;
+
     private List<AbstractCalculator> calculators = new ArrayList<AbstractCalculator>();
     private ICoverageData dataHandler;
     private AisCoverageConfiguration conf;
@@ -49,8 +50,10 @@ public class CoverageHandler {
 
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, CustomMessage> eldest) {
-            process(eldest.getValue());
-            return this.size() > 10000;
+            if (this.size() > MESSAGE_BUFFER_SIZE) {
+                process(eldest.getValue());
+            }
+            return this.size() > MESSAGE_BUFFER_SIZE;
         }
     };
 
