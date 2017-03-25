@@ -14,19 +14,6 @@
  */
 package dk.dma.ais.coverage.data;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dk.dma.ais.coverage.AisCoverage;
 import dk.dma.ais.coverage.Helper;
 import dk.dma.ais.coverage.calculator.AbstractCalculator;
@@ -41,6 +28,18 @@ import dk.dma.ais.packet.AisPacketTags;
 import dk.dma.ais.packet.AisPacketTags.SourceType;
 import dk.dma.ais.proprietary.IProprietarySourceTag;
 import dk.dma.enav.model.geometry.Position;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OnlyMemoryData implements ICoverageData {
     private static final Logger LOG = LoggerFactory
@@ -103,6 +102,14 @@ public class OnlyMemoryData implements ICoverageData {
                 updatedTimeSpan.setMessageCounterTerrestrial(oldTimeSpan.getMessageCounterTerrestrial() + newTimeSpan.getValue().getMessageCounterTerrestrial());
                 updatedTimeSpan.setMessageCounterTerrestrialUnfiltered(oldTimeSpan.getMessageCounterTerrestrialUnfiltered() + newTimeSpan.getValue().getMessageCounterTerrestrialUnfiltered());
                 updatedTimeSpan.setMissingSignals(oldTimeSpan.getMissingSignals() + newTimeSpan.getValue().getMissingSignals());
+                int oldVsiMessageCounter = oldTimeSpan.getVsiMessageCounter();
+                int newVsiMessageCounter = newTimeSpan.getValue().getVsiMessageCounter();
+                if (oldVsiMessageCounter + newVsiMessageCounter > 0) {
+                    updatedTimeSpan.setVsiMessageCounter(oldVsiMessageCounter + newVsiMessageCounter);
+                    updatedTimeSpan.setAverageSignalStrength(
+                            ((oldVsiMessageCounter * oldTimeSpan.getAverageSignalStrength()) + (newVsiMessageCounter * newTimeSpan.getValue().getAverageSignalStrength()))
+                                    / updatedTimeSpan.getVsiMessageCounter());
+                }
 
                 oldCell.getFixedWidthSpans().put(newTimeSpan.getKey(), updatedTimeSpan);
             }
@@ -126,8 +133,8 @@ public class OnlyMemoryData implements ICoverageData {
                     cells.add(cell);
                 }
             }
-
         }
+
         return cells;
     }
 
@@ -179,20 +186,15 @@ public class OnlyMemoryData implements ICoverageData {
                 Collection<Cell> bscells = source.getGrid().values();
                 for (Cell cell : bscells) {
 
-                    if (Helper.isInsideBox(cell, latStart, lonStart, latEnd,
-                            lonEnd)) {
-                        Cell tempCell = cellMultiplicationSource.getCell(
-                                cell.getLatitude(), cell.getLongitude());
+                    if (Helper.isInsideBox(cell, latStart, lonStart, latEnd, lonEnd)) {
+                        Cell tempCell = cellMultiplicationSource.getCell(cell.getLatitude(), cell.getLongitude());
                         if (tempCell == null) {
-                            tempCell = cellMultiplicationSource.createCell(
-                                    cell.getLatitude(), cell.getLongitude());
+                            tempCell = cellMultiplicationSource.createCell(cell.getLatitude(), cell.getLongitude());
                         }
-                        tempCell.addNOofMissingSignals((int) cell
-                                .getNOofMissingSignals(starttime, endtime));
-                        tempCell.addReceivedSignals(cell
-                                .getNOofReceivedSignals(starttime, endtime));
+                        tempCell.addNOofMissingSignals((int) cell.getNOofMissingSignals(starttime, endtime));
+                        tempCell.addReceivedSignals(cell.getNOofReceivedSignals(starttime, endtime));
+                        tempCell.addVsiMessages(cell.getNumberOfVsiMessages(starttime, endtime), cell.getAverageSignalStrength(starttime, endtime));
                     }
-
                 }
 
                 // add cells for particular source to cell-list.
@@ -218,31 +220,23 @@ public class OnlyMemoryData implements ICoverageData {
     }
 
     @Override
-    public void incrementReceivedSignals(String sourceMmsi, double lat,
-            double lon, Date timestamp) {
-        Cell cell = getCell(sourceMmsi, lat, lon);
-        if (cell == null) {
-            cell = createCell(sourceMmsi, lat, lon);
-        }
-        Date id = Helper.getFloorDate(timestamp);
-        TimeSpan ts = cell.getFixedWidthSpans().get(id.getTime());
-        if (ts == null) {
-            ts = new TimeSpan(id);
-            ts.setLastMessage(Helper.getCeilDate(timestamp));
-            cell.getFixedWidthSpans().put(id.getTime(), ts);
-        }
+    public void incrementReceivedSignals(String sourceMmsi, double lat, double lon, Date timestamp) {
+        Cell cell = getCellFromCoordinates(sourceMmsi, lat, lon);
+        TimeSpan ts = getTimeSpanFromTimestamp(timestamp, cell);
+
         ts.setMessageCounterTerrestrial(ts.getMessageCounterTerrestrial() + 1);
         cell.incrementNOofReceivedSignals();
     }
 
-    @Override
-    public void incrementMissingSignals(String sourceMmsi, double lat,
-            double lon, Date timestamp) {
-
+    private Cell getCellFromCoordinates(String sourceMmsi, double lat, double lon) {
         Cell cell = getCell(sourceMmsi, lat, lon);
         if (cell == null) {
             cell = createCell(sourceMmsi, lat, lon);
         }
+        return cell;
+    }
+
+    private TimeSpan getTimeSpanFromTimestamp(Date timestamp, Cell cell) {
         Date id = Helper.getFloorDate(timestamp);
         TimeSpan ts = cell.getFixedWidthSpans().get(id.getTime());
         if (ts == null) {
@@ -250,8 +244,25 @@ public class OnlyMemoryData implements ICoverageData {
             ts.setLastMessage(Helper.getCeilDate(timestamp));
             cell.getFixedWidthSpans().put(id.getTime(), ts);
         }
+        return ts;
+    }
+
+    @Override
+    public void incrementMissingSignals(String sourceMmsi, double lat, double lon, Date timestamp) {
+        Cell cell = getCellFromCoordinates(sourceMmsi, lat, lon);
+        TimeSpan ts = getTimeSpanFromTimestamp(timestamp, cell);
+
         ts.incrementMissingSignals();
         cell.incrementNOofMissingSignals();
+    }
+
+    @Override
+    public void incrementReceivedVsiMessage(String sourceMmsi, double latitude, double longitude, Date timestamp, int signalStrength) {
+        Cell cell = getCellFromCoordinates(sourceMmsi, latitude, longitude);
+        TimeSpan ts = getTimeSpanFromTimestamp(timestamp, cell);
+
+        ts.incrementNumberOfVsiMessages(signalStrength);
+        cell.incrementNumberOfVsiMessages(signalStrength);
     }
 
     public CustomMessage packetToCustomMessage(AisPacket packet) {
@@ -353,25 +364,36 @@ public class OnlyMemoryData implements ICoverageData {
             }
         }
 
-        // Extract ship
-        Ship ship = getShip(aisMessage.getUserId());
-        if (ship == null) {
-            ship = createShip(aisMessage.getUserId(), shipClass);
+        if (packet.isVsi()) {
+            CustomMessage newMessage = new CustomMessage();
+            newMessage.setVsi(true);
+            newMessage.setSignalStrength(packet.getVsi().getSignalStrength());
+            newMessage.setLatitude(posMessage.getPos().getGeoLocation().getLatitude());
+            newMessage.setLongitude(posMessage.getPos().getGeoLocation().getLongitude());
+            newMessage.setTimestamp(packet.getVsi().getTimestamp());
+
+            return newMessage;
+        } else {
+            // Extract ship
+            Ship ship = getShip(aisMessage.getUserId());
+            if (ship == null) {
+                ship = createShip(aisMessage.getUserId(), shipClass);
+            }
+
+            CustomMessage newMessage = new CustomMessage();
+            newMessage.setCog((double) posMessage.getCog() / 10);
+            newMessage.setSog((double) posMessage.getSog() / 10);
+            newMessage.setLatitude(posMessage.getPos().getGeoLocation()
+                    .getLatitude());
+            newMessage.setLongitude(posMessage.getPos().getGeoLocation()
+                    .getLongitude());
+            newMessage.setTimestamp(timestamp);
+            newMessage.addSourceMMSI(baseId);
+            newMessage.setShipMMSI(aisMessage.getUserId());
+            newMessage.setSourceType(sourceType);
+
+            return newMessage;
         }
-
-        CustomMessage newMessage = new CustomMessage();
-        newMessage.setCog((double) posMessage.getCog() / 10);
-        newMessage.setSog((double) posMessage.getSog() / 10);
-        newMessage.setLatitude(posMessage.getPos().getGeoLocation()
-                .getLatitude());
-        newMessage.setLongitude(posMessage.getPos().getGeoLocation()
-                .getLongitude());
-        newMessage.setTimestamp(timestamp);
-        newMessage.addSourceMMSI(baseId);
-        newMessage.setShipMMSI(aisMessage.getUserId());
-        newMessage.setSourceType(sourceType);
-
-        return newMessage;
     }
 
     @Override

@@ -28,7 +28,8 @@ public class CellFixture {
         double longitude = randomLongitude(latitude);
         String cellId = Helper.getCellId(latitude, longitude, 1);
 
-        return new Cell(latitude, longitude, cellId);
+        Cell cell = new Cell(latitude, longitude, cellId);
+        return cell;
     }
 
     public static double randomLatitude() {

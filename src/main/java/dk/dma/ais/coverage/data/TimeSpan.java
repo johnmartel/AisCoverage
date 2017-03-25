@@ -118,6 +118,16 @@ public class TimeSpan {
         this.averageSignalStrength = averageSignalStrength;
     }
 
+    public synchronized void incrementNumberOfVsiMessages(int signalStrength) {
+        int incrementedNumberOfVsiMessages = vsiMessageCounter + 1;
+        averageSignalStrength = computeAverageSignalStrength(signalStrength, incrementedNumberOfVsiMessages);
+        vsiMessageCounter = incrementedNumberOfVsiMessages;
+    }
+
+    private int computeAverageSignalStrength(int signalStrength, int incrementedNumberOfVsiMessages) {
+        return Math.floorDiv((vsiMessageCounter * averageSignalStrength) + signalStrength, incrementedNumberOfVsiMessages);
+    }
+
     public void add(TimeSpan other) {
         this.setMessageCounterSat(this.getMessageCounterSat() + other.getMessageCounterSat());
         this.setMessageCounterTerrestrial(this.getMessageCounterTerrestrial() + other.getMessageCounterTerrestrial());

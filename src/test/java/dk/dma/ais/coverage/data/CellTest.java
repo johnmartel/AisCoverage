@@ -44,7 +44,7 @@ public class CellTest {
     }
 
     @Test
-    public void whenGettNumberOfVsiMessagesWithTimestamps_thenNumberOfVsiMessagesFromMatchingTimespansAreReturned() {
+    public void whenGetNumberOfVsiMessagesWithTimestamps_thenNumberOfVsiMessagesFromMatchingTimespansAreReturned() {
         Cell aCell = CellFixture.createCellWithTimeSpans();
         TimeSpan firstTimespan = aCell.getFixedWidthSpans().values().iterator().next();
 
@@ -54,7 +54,7 @@ public class CellTest {
     }
 
     @Test
-    public void whengetAverageSignalStrength_thenAverageSignalStrengthFromMatchingTimespansAreReturned() {
+    public void whenGetAverageSignalStrength_thenAverageSignalStrengthFromMatchingTimespansAreReturned() {
         Cell aCell = CellFixture.createCellWithTimeSpans();
         Iterator<TimeSpan> timeSpanIterator = aCell.getFixedWidthSpans().values().iterator();
         TimeSpan firstTimespan = timeSpanIterator.next();

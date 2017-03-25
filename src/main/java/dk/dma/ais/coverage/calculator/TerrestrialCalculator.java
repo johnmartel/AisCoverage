@@ -14,6 +14,19 @@
  */
 package dk.dma.ais.coverage.calculator;
 
+import dk.dma.ais.coverage.AisCoverage;
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.CustomMessage;
+import dk.dma.ais.coverage.data.QueryParams;
+import dk.dma.ais.coverage.data.Ship;
+import dk.dma.ais.coverage.event.AisEvent;
+import dk.dma.ais.coverage.event.IAisEventListener;
+import dk.dma.ais.coverage.export.data.ExportCell;
+import dk.dma.ais.coverage.export.data.JSonCoverageMap;
+import dk.dma.ais.coverage.export.data.JsonConverter;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,28 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import dk.dma.ais.coverage.AisCoverage;
-import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.configuration.AisCoverageConfiguration;
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.CustomMessage;
-import dk.dma.ais.coverage.data.QueryParams;
-import dk.dma.ais.coverage.data.Ship;
-import dk.dma.ais.coverage.data.Ship.ShipClass;
-import dk.dma.ais.coverage.data.Source;
-import dk.dma.ais.coverage.data.Source.ReceiverType;
-import dk.dma.ais.coverage.data.Source_UserProvided;
-import dk.dma.ais.coverage.event.AisEvent;
-import dk.dma.ais.coverage.event.AisEvent.Event;
-import dk.dma.ais.coverage.event.IAisEventListener;
-import dk.dma.ais.coverage.export.data.ExportCell;
-import dk.dma.ais.coverage.export.data.JSonCoverageMap;
-import dk.dma.ais.coverage.export.data.JsonConverter;
-import dk.dma.ais.message.AisMessage;
-import dk.dma.ais.message.AisMessage4;
-import dk.dma.ais.message.AisPositionMessage;
-import dk.dma.ais.proprietary.IProprietarySourceTag;
 
 /**
  * This calculator expects a filtered data stream! (No doublets) The stream must not be downsampled!
@@ -103,7 +94,11 @@ public class TerrestrialCalculator extends AbstractCalculator {
      * This is called whenever a message is received
      */
     public void calculate(CustomMessage message) {
-
+        if (message.isVsi()) {
+            dataHandler.incrementReceivedVsiMessage(AbstractCalculator.SUPERSOURCE_MMSI, message.getLatitude(), message.getLongitude(), message.getTimestamp(), message.getSignalStrength());
+            approveMessage(message);
+            return;
+        }
 
         Ship ship = dataHandler.getShip(message.getShipMMSI());
 

@@ -109,6 +109,10 @@ public class MongoCoverageDataMarshallerTest {
         assertThat(firstMarshalledCell.get("cellId"), is(equalTo(firstCell.getId())));
         assertThat(firstMarshalledCell.get("latitude"), is(equalTo(firstCell.getLatitude())));
         assertThat(firstMarshalledCell.get("longitude"), is(equalTo(firstCell.getLongitude())));
+        assertThat(firstMarshalledCell.get("numberOfReceivedSignals"), is(equalTo(firstCell.getNOofReceivedSignals())));
+        assertThat(firstMarshalledCell.get("numberOfMissingSignals"), is(equalTo(firstCell.getNOofMissingSignals())));
+        assertThat(firstMarshalledCell.get("numberOfVsiMessages"), is(equalTo(firstCell.getNumberOfVsiMessages())));
+        assertThat(firstMarshalledCell.get("averageSignalStrength"), is(equalTo(firstCell.getAverageSignalStrength())));
 
         Map<String, Map<String, Number>> firstMarshalledCellTimespans = (Map<String, Map<String, Number>>) firstMarshalledCell.get("timespans");
         assertThat(firstMarshalledCellTimespans.size(), is(equalTo(2)));
@@ -123,12 +127,18 @@ public class MongoCoverageDataMarshallerTest {
             assertThat(marshalledTimeSpan.get("messageCounterTerrestrial"), is(equalTo(expectedTimeSpan.getMessageCounterTerrestrial())));
             assertThat(marshalledTimeSpan.get("messageCounterTerrestrialUnfiltered"), is(equalTo(expectedTimeSpan.getMessageCounterTerrestrialUnfiltered())));
             assertThat(marshalledTimeSpan.get("missingSignals"), is(equalTo(expectedTimeSpan.getMissingSignals())));
+            assertThat(marshalledTimeSpan.get("vsiMessageCounter"), is(equalTo(expectedTimeSpan.getVsiMessageCounter())));
+            assertThat(marshalledTimeSpan.get("averageSignalStrength"), is(equalTo(expectedTimeSpan.getAverageSignalStrength())));
         }
 
         Map<String, Object> secondMarshalledCell = grid.get(1);
         assertThat(secondMarshalledCell.get("cellId"), is(equalTo(secondCell.getId())));
         assertThat(secondMarshalledCell.get("latitude"), is(equalTo(secondCell.getLatitude())));
         assertThat(secondMarshalledCell.get("longitude"), is(equalTo(secondCell.getLongitude())));
+        assertThat(secondMarshalledCell.get("numberOfReceivedSignals"), is(equalTo(secondCell.getNOofReceivedSignals())));
+        assertThat(secondMarshalledCell.get("numberOfMissingSignals"), is(equalTo(secondCell.getNOofMissingSignals())));
+        assertThat(secondMarshalledCell.get("numberOfVsiMessages"), is(equalTo(secondCell.getNumberOfVsiMessages())));
+        assertThat(secondMarshalledCell.get("averageSignalStrength"), is(equalTo(secondCell.getAverageSignalStrength())));
 
         Map<Long, Map<String, Number>> secondMarshalledCellTimespans = (Map<Long, Map<String, Number>>) secondMarshalledCell.get("timespans");
         assertThat(secondMarshalledCellTimespans.isEmpty(), is(true));
@@ -169,6 +179,10 @@ public class MongoCoverageDataMarshallerTest {
         assertThat(firstUnmarshalledCell.getId(), is(equalTo(firstCell.getId())));
         assertThat(firstUnmarshalledCell.getLatitude(), is(closeTo(firstCell.getLatitude(), DELTA_WHEN_COMPARING_DOUBLE)));
         assertThat(firstUnmarshalledCell.getLongitude(), is(closeTo(firstCell.getLongitude(), DELTA_WHEN_COMPARING_DOUBLE)));
+        assertThat(firstUnmarshalledCell.getNOofReceivedSignals(), is(equalTo(firstCell.getNOofReceivedSignals())));
+        assertThat(firstUnmarshalledCell.getNOofMissingSignals(), is(equalTo(firstCell.getNOofMissingSignals())));
+        assertThat(firstUnmarshalledCell.getNumberOfVsiMessages(), is(equalTo(firstCell.getNumberOfVsiMessages())));
+        assertThat(firstUnmarshalledCell.getAverageSignalStrength(), is(equalTo(firstCell.getAverageSignalStrength())));
 
         Map<Long, TimeSpan> firstUnmarshalledCellFixedWidthSpans = firstUnmarshalledCell.getFixedWidthSpans();
         assertThat(firstUnmarshalledCellFixedWidthSpans.size(), is(equalTo(2)));
@@ -183,12 +197,18 @@ public class MongoCoverageDataMarshallerTest {
             assertThat(unmarshalledTimeSpan.getMessageCounterTerrestrial(), is(equalTo(expectedTimeSpan.getMessageCounterTerrestrial())));
             assertThat(unmarshalledTimeSpan.getMessageCounterTerrestrialUnfiltered(), is(equalTo(expectedTimeSpan.getMessageCounterTerrestrialUnfiltered())));
             assertThat(unmarshalledTimeSpan.getMissingSignals(), is(equalTo(expectedTimeSpan.getMissingSignals())));
+            assertThat(unmarshalledTimeSpan.getVsiMessageCounter(), is(equalTo(expectedTimeSpan.getVsiMessageCounter())));
+            assertThat(unmarshalledTimeSpan.getAverageSignalStrength(), is(equalTo(expectedTimeSpan.getAverageSignalStrength())));
         }
 
         Cell secondUnmarshalledCell = cellsFromDefaultSource.next();
         assertThat(secondUnmarshalledCell.getId(), is(equalTo(secondCell.getId())));
         assertThat(secondUnmarshalledCell.getLatitude(), is(closeTo(secondCell.getLatitude(), DELTA_WHEN_COMPARING_DOUBLE)));
         assertThat(secondUnmarshalledCell.getLongitude(), is(closeTo(secondCell.getLongitude(), DELTA_WHEN_COMPARING_DOUBLE)));
+        assertThat(secondUnmarshalledCell.getNOofReceivedSignals(), is(equalTo(secondCell.getNOofReceivedSignals())));
+        assertThat(secondUnmarshalledCell.getNOofMissingSignals(), is(equalTo(secondCell.getNOofMissingSignals())));
+        assertThat(secondUnmarshalledCell.getNumberOfVsiMessages(), is(equalTo(secondCell.getNumberOfVsiMessages())));
+        assertThat(secondUnmarshalledCell.getAverageSignalStrength(), is(equalTo(secondCell.getAverageSignalStrength())));
 
         assertThat(secondUnmarshalledCell.getFixedWidthSpans().isEmpty(), is(true));
     }

@@ -71,7 +71,11 @@ public class Cell {
     }
 
     private int computeAverageSignalStrength(int signalStrength, int incrementedNumberOfVsiMessages) {
-        return Math.floorDiv((numberOfVsiMessages * averageSignalStrength) + signalStrength, incrementedNumberOfVsiMessages);
+        if (incrementedNumberOfVsiMessages > 0) {
+            return Math.floorDiv((numberOfVsiMessages * averageSignalStrength) + signalStrength, incrementedNumberOfVsiMessages);
+        } else {
+            return 0;
+        }
     }
 
     public synchronized long getTotalNumberOfMessages() {
@@ -188,7 +192,11 @@ public class Cell {
             }
         }
 
-        return Math.floorDiv(summedAverageSignalStrength, numberOfVsiMessages);
+        if (numberOfVsiMessages > 0) {
+            return Math.floorDiv(summedAverageSignalStrength, numberOfVsiMessages);
+        } else {
+            return 0;
+        }
     }
 
     public synchronized void addVsiMessages(int numberOfVsiMessages, int averageSignalStrength) {

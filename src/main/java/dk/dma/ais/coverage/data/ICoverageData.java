@@ -14,12 +14,12 @@
  */
 package dk.dma.ais.coverage.data;
 
+import dk.dma.ais.coverage.data.Ship.ShipClass;
+import dk.dma.ais.packet.AisPacket;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-
-import dk.dma.ais.coverage.data.Ship.ShipClass;
-import dk.dma.ais.packet.AisPacket;
 
 public interface ICoverageData {
 
@@ -37,5 +37,7 @@ public interface ICoverageData {
     Collection<Source> getSources();
     void incrementReceivedSignals(String sourceMmsi, double lat, double lon, Date timestamp);
     void incrementMissingSignals(String sourceMmsi, double lat, double lon, Date timestamp);
+    void incrementReceivedVsiMessage(String sourceMmsi, double latitude, double longitude, Date timestamp, int signalStrength);
     void trimWindow(Date trimPoint);
+
 }

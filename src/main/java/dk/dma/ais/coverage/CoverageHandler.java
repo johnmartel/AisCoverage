@@ -14,15 +14,6 @@
  */
 package dk.dma.ais.coverage;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import dk.dma.ais.coverage.calculator.AbstractCalculator;
 import dk.dma.ais.coverage.calculator.SatCalculator;
 import dk.dma.ais.coverage.calculator.TerrestrialCalculator;
@@ -32,6 +23,14 @@ import dk.dma.ais.coverage.data.ICoverageData;
 import dk.dma.ais.coverage.data.OnlyMemoryData;
 import dk.dma.ais.coverage.data.Ship;
 import dk.dma.ais.packet.AisPacket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Handler for received AisPackets
@@ -117,7 +116,7 @@ public class CoverageHandler {
         
         //extract relevant information from packet
         CustomMessage message = dataHandler.packetToCustomMessage(packet);
-        if(message == null){
+        if (message == null) {
             return;
         }
         
@@ -128,7 +127,9 @@ public class CoverageHandler {
         if (existing == null) {
             doubletBuffer.put(key, message);
         }else{
-            existing.addSourceMMSI(message.getSourceList().iterator().next());
+            if (message.getSourceList().iterator().hasNext()) {
+                existing.addSourceMMSI(message.getSourceList().iterator().next());
+            }
         }
 
     }

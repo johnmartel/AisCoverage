@@ -14,15 +14,13 @@
  */
 package dk.dma.ais.coverage.data;
 
+import dk.dma.ais.message.AisMessage;
+import dk.dma.ais.packet.AisPacketTags.SourceType;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
-
-import dk.dma.ais.message.AisMessage;
-import dk.dma.ais.packet.AisPacketTags.SourceType;
 
 /**
  * Used for storing information relevant for the calculators
@@ -41,6 +39,8 @@ public class CustomMessage implements Serializable {
     private long timeSinceLastMsg;
     private String key;
     private SourceType sourceType;
+    private boolean vsi;
+    private int signalStrength;
 
     public SourceType getSourceType() {
         return sourceType;
@@ -125,4 +125,19 @@ public class CustomMessage implements Serializable {
         this.originalMessage = originalMessage;
     }
 
+    public void setVsi(boolean vsi) {
+        this.vsi = vsi;
+    }
+
+    public boolean isVsi() {
+        return vsi;
+    }
+
+    public void setSignalStrength(int signalStrength) {
+        this.signalStrength = signalStrength;
+    }
+
+    public int getSignalStrength() {
+        return signalStrength;
+    }
 }

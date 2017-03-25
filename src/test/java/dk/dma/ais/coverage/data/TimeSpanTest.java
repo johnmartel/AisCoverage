@@ -55,4 +55,15 @@ public class TimeSpanTest {
         assertThat(copy.getVsiMessageCounter(), is(equalTo(9)));
         assertThat(copy.getAverageSignalStrength(), is(equalTo(-100)));
     }
+
+    @Test
+    public void whenIncrementNumberOfVsiMessages_thenNumberOfVsiMessagesHasOneAdded() {
+        aTimeSpan.setVsiMessageCounter(1);
+        aTimeSpan.setAverageSignalStrength(-15);
+
+        aTimeSpan.incrementNumberOfVsiMessages(-10);
+
+        assertThat(aTimeSpan.getVsiMessageCounter(), is(equalTo(2)));
+        assertThat(aTimeSpan.getAverageSignalStrength(), is(equalTo(-13)));
+    }
 }

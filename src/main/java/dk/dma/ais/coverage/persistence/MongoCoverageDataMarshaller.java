@@ -67,6 +67,8 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
         savedCell.put("longitude", cell.getLongitude());
         savedCell.put("numberOfReceivedSignals", cell.getNOofReceivedSignals());
         savedCell.put("numberOfMissingSignals", cell.getNOofMissingSignals());
+        savedCell.put("numberOfVsiMessages", cell.getNumberOfVsiMessages());
+        savedCell.put("averageSignalStrength", cell.getAverageSignalStrength());
 
         Map<String, Map<String, Number>> fixedWidthTimeSpans = marshallCellTimeSpans(cell);
         savedCell.put("timespans", fixedWidthTimeSpans);
@@ -84,6 +86,8 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
             messages.put("messageCounterTerrestrial", fixedWidthTimeSpan.getValue().getMessageCounterTerrestrial());
             messages.put("messageCounterTerrestrialUnfiltered", fixedWidthTimeSpan.getValue().getMessageCounterTerrestrialUnfiltered());
             messages.put("missingSignals", fixedWidthTimeSpan.getValue().getMissingSignals());
+            messages.put("vsiMessageCounter", fixedWidthTimeSpan.getValue().getVsiMessageCounter());
+            messages.put("averageSignalStrength", fixedWidthTimeSpan.getValue().getAverageSignalStrength());
 
             fixedWidthTimeSpans.put(fixedWidthTimeSpan.getKey().toString(), messages);
         }
@@ -160,6 +164,11 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
         unmarshalledCell.addReceivedSignals(((Integer) cell.get("numberOfReceivedSignals")).intValue());
         unmarshalledCell.addNOofMissingSignals(((Integer) cell.get("numberOfMissingSignals")).intValue());
 
+        Integer numberOfVsiMessages = (Integer) cell.get("numberOfVsiMessages");
+        if (numberOfVsiMessages != null && numberOfVsiMessages > 0) {
+            unmarshalledCell.addVsiMessages(numberOfVsiMessages.intValue(), ((Integer) cell.get("averageSignalStrength")).intValue());
+        }
+
         Map<String, Map<String, Number>> fixedWidthTimeSpans = (Map<String, Map<String, Number>>) cell.get("timespans");
         Map<Long, TimeSpan> unmarshalledTimeSpans = unmarshallTimeSpans(fixedWidthTimeSpans);
 
@@ -176,6 +185,13 @@ class MongoCoverageDataMarshaller implements CoverageDataMarshaller<Document> {
             unmarshalledTimeSpan.setMessageCounterTerrestrial(timespan.getValue().get("messageCounterTerrestrial").intValue());
             unmarshalledTimeSpan.setMessageCounterTerrestrialUnfiltered(timespan.getValue().get("messageCounterTerrestrialUnfiltered").intValue());
             unmarshalledTimeSpan.setMissingSignals(timespan.getValue().get("missingSignals").intValue());
+
+            Integer numberOfVsiMessages = (Integer) timespan.getValue().get("vsiMessageCounter");
+            if (numberOfVsiMessages != null) {
+                unmarshalledTimeSpan.setVsiMessageCounter(numberOfVsiMessages.intValue());
+                unmarshalledTimeSpan.setAverageSignalStrength(((Integer) timespan.getValue().get("averageSignalStrength")).intValue());
+            }
+
             unmarshalledTimeSpans.put(Long.valueOf(timespan.getKey()), unmarshalledTimeSpan);
         }
         return unmarshalledTimeSpans;
