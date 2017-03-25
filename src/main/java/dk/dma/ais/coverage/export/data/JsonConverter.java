@@ -14,17 +14,13 @@
  */
 package dk.dma.ais.coverage.export.data;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import dk.dma.ais.coverage.calculator.AbstractCalculator;
 import dk.dma.ais.coverage.data.Cell;
 import dk.dma.ais.coverage.data.Source;
 import dk.dma.ais.coverage.data.TimeSpan;
+import org.apache.commons.lang3.RandomUtils;
 
 public class JsonConverter {
 
@@ -61,11 +57,13 @@ public class JsonConverter {
         long expected = superCell.getNOofReceivedSignals() + superCell.getNOofMissingSignals();
         // System.out.println(superCell.getNOofMissingSignals());
 
-        ExportCell Jcell = new ExportCell();
-        Jcell.lat = cell.getLatitude();
-        Jcell.lon = cell.getLongitude();
-        Jcell.nrOfMisMes = expected - cell.getNOofReceivedSignals();
-        Jcell.nrOfRecMes = cell.getNOofReceivedSignals();
+        ExportCell jsonCell = new ExportCell();
+        jsonCell.lat = cell.getLatitude();
+        jsonCell.lon = cell.getLongitude();
+        jsonCell.nrOfMisMes = expected - cell.getNOofReceivedSignals();
+        jsonCell.nrOfRecMes = cell.getNOofReceivedSignals();
+        jsonCell.numberOfVsiMessages = cell.getNumberOfVsiMessages();
+        jsonCell.averageSignalStrength = cell.getAverageSignalStrength();
 
         // if(expected < Jcell.nrOfRecMes){
         // System.out.println("supercell received="+superCell.getNOofReceivedSignals());
@@ -76,7 +74,7 @@ public class JsonConverter {
         // System.out.println();
         // }
 
-        return Jcell;
+        return jsonCell;
     }
 
     public static List<JsonTimeSpan> toJsonTimeSpan(List<TimeSpan> timespans) {

@@ -31,18 +31,12 @@
 		var y=document.getElementById("expotype").options;
 		exportType.value = y[x].text;
 		}
-		</script>
+</script>
 
 <link rel="stylesheet" type="text/css" href="css/bargenerator.css">
 
 
 </head>
-
-
-
-
-
-
 
 
 
@@ -58,9 +52,19 @@
 			<div id="featureDetailsPanel" class="expandable whiteOpacity"></div>
 
 			<div id="thresholdPanel" class="expandable whiteOpacity">
+				<div class="smallText">Coverage type</div>
+				<div
+					style="margin-top: 10px; margin-bottom: 10px; margin-left: auto; margin-right: auto; width: 100px;">
+					<select name="coverageType" id="coverageType"
+						style="width: auto">
+						<option value="VDM">Receive Messages</option>
+						<option value="VSI">Signal Strength</option>
+					</select>
+				</div>
+
 				<div class="smallText">Coloring thresholds</div>
 				<div
-					style="margin-top: 10px; margin-bottom: 5px; margin-left: 10px;; margin-right: auto">
+					style="margin-top: 10px; margin-bottom: 5px;">
 					<div id="redbox" class="colorbox"></div>
 					<div id="min-range" class="information"
 						style="float: left; margin-left: 3px;"></div>
@@ -109,8 +113,6 @@
 						<!-- 						  <option value="saab">Something</option> -->
 					</select>
 				</div>
-
-
 
 
 				<div class="smallText" style="margin-top: 20px;">Cell zoom
@@ -200,7 +202,7 @@
 	</div>
 
 	<div class="whiteOpacity"
-		style="position: absolute; bottom: 15px; left: 10px; background: white;">
+		style="position: absolute; bottom: 15px; right: 10px; background: white;">
 		<img src="img/logo.png" style="padding: 10px">
 	</div>
 

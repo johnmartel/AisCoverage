@@ -6,6 +6,7 @@ function CoverageUI () {
     this.changed = true;
     this.minThreshold = 50;
     this.maxThreshold = 80;
+    this.thresholdUnit = "%"
     this.minExpectedMessages = 100;
     this.exportMultiplicationFactor = 4;
     this.startDate; //is the time when the analysis started (used for sliding window)
@@ -82,6 +83,23 @@ function CoverageUI () {
     		self.refreshSourceDetails();
     		self.changed=true;
     	});
+
+        $(document).on('change', "#coverageType", function(e) {
+            coverageType=$(this).val();
+            if ($(this).val() == "VDM") {
+                self.maxThreshold = 80;
+                self.minThreshold = 50;
+                self.thresholdUnit = "%";
+            } else {
+                self.maxThreshold = -50;
+                self.minThreshold = -100;
+                self.thresholdUnit = "db";
+            }
+
+            self.drawSlider();
+            self.cleanupCellDetails();
+            self.changed=true;
+        });
     	
     	//Close window listeners
     	$('.close').parent().hide();
@@ -115,28 +133,8 @@ function CoverageUI () {
     		self.updateBarChart();
     	});
 
-    	
-    	
-    	 
     	//setup the threshold slider
-    	$( "#slider-range" ).dragslider({
-    		range: true,
-    	    min: 0,
-    	    max: 100,
-    	    rangeDrag: true,
-    	    values: [ self.minThreshold, self.maxThreshold ],
-    	    slide: function( event, ui ) {
-    	    	self.minThreshold = ui.values[ 0 ];
-    	    	self.maxThreshold = ui.values[ 1 ];
-    	    	$( "#min-range" ).html( " < " + self.minThreshold + "% <= " );
-    	    	$( "#max-range" ).html( " < " + self.maxThreshold + "% <= " );
-    	    },
-	    	change: function(event, ui){
-	    		self.changed = true;
-	    	}
-    	});
-    	$( "#min-range" ).html( " < " + self.minThreshold + "% <= " );
-    	$( "#max-range" ).html( " < " + self.maxThreshold + "% <= " );
+    	self.drawSlider();
     	
     	//setup min expected messages per cell slider
     	var minExpected = $("#minExpected");
@@ -154,10 +152,8 @@ function CoverageUI () {
 	    	}
     	});
     	
-    	
     	//setup sliding window
     	self.updateSlidingWindow();
-    	
     	
     	//setup
     	var exportMultiplicationDivHidden = $("#exportMultiHidden");
@@ -175,7 +171,6 @@ function CoverageUI () {
     		}
     	});
     	
-    	
     	//setting the loop function
     	var myTimeout; 
     	function loopFunction () {;
@@ -190,8 +185,6 @@ function CoverageUI () {
     	
     	//map changed listener
     	map.events.register('moveend', this, function (event) {
-    		
-    		
     	
     		//update export div
     		self.exportMultiplicationFactor = self.getMultiplicationFactor();
@@ -206,6 +199,33 @@ function CoverageUI () {
     		
         });
     }
+
+    this.isVDMCategory = function() {
+        return $('#coverageType').val() == "VDM";
+    }
+
+    this.drawSlider = function() {
+        $( "#slider-range" ).dragslider({
+            range: true,
+            min: self.isVDMCategory() ? 0 : -200,
+            max: self.isVDMCategory() ? 100 : 200,
+            rangeDrag: true,
+            values: [ self.minThreshold, self.maxThreshold ],
+            slide: function( event, ui ) {
+                self.minThreshold = ui.values[ 0 ];
+                self.maxThreshold = ui.values[ 1 ];
+                $( "#min-range" ).html( " < " + self.minThreshold + self.thresholdUnit + " <= " );
+                $( "#max-range" ).html( " < " + self.maxThreshold + self.thresholdUnit + " <= " );
+            },
+            change: function(event, ui){
+                self.changed = true;
+            }
+        });
+        $( "#min-range" ).html( " < " + self.minThreshold + self.thresholdUnit + " <= " );
+        $( "#max-range" ).html( " < " + self.maxThreshold + self.thresholdUnit + " <= " );
+    }
+
+
     this.updateShipTrack = function(){
     	aisJsonClient.getShipTrack(selectedStartDate.getTime(), selectedEndDate.getTime(), $('#shiptrackingmmsi').val(), function(trackarray){
     		shiptrackactive=true;
@@ -754,36 +774,51 @@ function CoverageUI () {
     		$('#latSize').html(data.latSize.toFixed(4) + " degrees");
     		$('#lonSize').html(data.lonSize.toFixed(4) + " degrees");
     		
-    		var minExpectedMessages = 
-    		$.each(data.cells, function(key, val) {
-  			  var points = [
-  			        		new OpenLayers.Geometry.Point(val.lon, val.lat),
-  			        		new OpenLayers.Geometry.Point(val.lon, val.lat+data.latSize),
-  			        		new OpenLayers.Geometry.Point(val.lon+data.lonSize, val.lat+data.latSize),
-  			        		new OpenLayers.Geometry.Point(val.lon+data.lonSize, val.lat)
-  			        	];
-  			  var expectedMessages = (val.nrOfMisMes+val.nrOfRecMes);
-  			  var coverageValue = val.nrOfRecMes/expectedMessages;
-  			  var color;
-  			  if(expectedMessages >= self.minExpectedMessages){
-	  			  if(coverageValue >= self.maxThreshold/100){
-	  				  color ='green';
-	  			  }else if(coverageValue >= self.minThreshold/100){
-	  				  color ='yellow';
-	  			  }else{
-	  				  color ='red';
-	  			  }
+            // Check signal or messages
+            var coverageType = $('#coverageType').val();
+            
+        		var minExpectedMessages = 
+        		$.each(data.cells, function(key, val) {
+      			    var points = [
+      			        		new OpenLayers.Geometry.Point(val.lon, val.lat),
+      			        		new OpenLayers.Geometry.Point(val.lon, val.lat+data.latSize),
+      			        		new OpenLayers.Geometry.Point(val.lon+data.lonSize, val.lat+data.latSize),
+      			        		new OpenLayers.Geometry.Point(val.lon+data.lonSize, val.lat)
+      			        	];
+      			    var totalMessages = 0;
+                    var coverageValue = 0;
 
-	  			  self.drawPolygon({
-	  				  lat: val.lat,
-	  				  lon: val.lon,
-	  				  points: points,
-	  				  fillcolor: color,
-	  				  totalMessages: expectedMessages,
-	  				  receivedMessages: val.nrOfRecMes
-	  			  });
-  			  }
-  		  });
+                    if(coverageType == "VDM") {
+                        totalMessages = (val.nrOfMisMes+val.nrOfRecMes);
+                        coverageValue = val.nrOfRecMes/totalMessages;      
+                    } else {
+                        totalMessages = val.numberOfVsiMessages;
+                        coverageValue = val.averageSignalStrength;
+                    }
+                  
+
+      			  var color;
+      			  if(totalMessages >= self.minExpectedMessages){
+    	  			  if(coverageValue >= self.maxThreshold/100){
+    	  				  color ='green';
+    	  			  }else if(coverageValue >= self.minThreshold/100){
+    	  				  color ='yellow';
+    	  			  }else{
+    	  				  color ='red';
+    	  			  }
+
+    	  			  self.drawPolygon({
+    	  				  lat: val.lat,
+    	  				  lon: val.lon,
+    	  				  points: points,
+    	  				  fillcolor: color,
+    	  				  totalMessages: totalMessages,
+    	  				  receivedMessages: val.nrOfRecMes,
+                          averageSignalStrength: val.averageSignalStrength
+    	  			  });
+      			   }
+      		    });
+        
 //  		  self.loading = false;
   		  $("#loadingPanel").css('visibility', 'hidden');
     	});
@@ -807,6 +842,7 @@ function CoverageUI () {
     	polygonFeature.lat = options.lat;
     	polygonFeature.totalMessages = options.totalMessages;
     	polygonFeature.receivedMessages = options.receivedMessages;
+        polygonFeature.averageSignalStrength = options.averageSignalStrength;
     	polygonLayer.addFeatures([polygonFeature]);
     	
     }
@@ -864,18 +900,7 @@ function CoverageUI () {
         	
         	//Setting up cell details panel
         	$("#featureDetailsPanel > .panelHeader").html("Cell Details");
-        	$("#featureDetailsPanel > .panelContainer").html('<div class="smallText">Source</div>'+
-                    '<div class="information">'+feature.mmsi+'</div>'+
-                    '<div class="smallText">Cell Latitude</div>'+
-                    '<div class="information">'+feature.lat.toFixed(4)+'</div>'+
-                    '<div class="smallText">Cell Longitude</div>'+
-                    '<div class="information">'+feature.lon.toFixed(4)+'</div>'+
-                    '<div class="smallText">Received Messages</div>'+
-                    '<div class="information">'+feature.receivedMessages+'</div>'+
-                    '<div class="smallText">Expected Messages</div>'+  
-                    '<div class="information">'+feature.totalMessages+'</div>'+
-                    '<div class="smallText">Coverage</div>'+
-                    '<div class="information">'+((feature.receivedMessages/feature.totalMessages)*100).toFixed(2)+' %</div>');
+        	$("#featureDetailsPanel > .panelContainer").html(self.drawCellDetails(feature));
         	$("#featureDetailsPanel").slideDown();
         	
         	
@@ -887,6 +912,41 @@ function CoverageUI () {
             self.drawSources();
         }
         
+    }
+
+    this.drawCellDetails = function(feature) {
+        var coverageType = $('#coverageType').val();
+        var cellDetail = 
+            '<div class="smallText">Source</div>'+
+            '<div class="information">'+feature.mmsi+'</div>'+
+            '<div class="smallText">Cell Latitude</div>'+
+            '<div class="information">'+feature.lat.toFixed(4)+'</div>'+
+            '<div class="smallText">Cell Longitude</div>'+
+            '<div class="information">'+feature.lon.toFixed(4)+'</div>';
+
+            if (coverageType == "VDM") {
+                cellDetail = cellDetail.concat(
+                    '<div class="smallText">Received Messages</div>'+
+                    '<div class="information">'+feature.receivedMessages+'</div>'+
+                    '<div class="smallText">Expected Messages</div>'+  
+                    '<div class="information">'+feature.totalMessages+'</div>'+
+                    '<div class="smallText">Coverage</div>'+
+                    '<div class="information">'+((feature.receivedMessages/feature.totalMessages)*100).toFixed(2) + ' ' + self.thresholdUnit +'</div>');
+            } else {
+                cellDetail = cellDetail.concat(
+                    '<div class="smallText">Number of Messages</div>'+  
+                    '<div class="information">'+feature.totalMessages+'</div>'+
+                    '<div class="smallText">Average Signal Strength</div>'+
+                    '<div class="information">'+feature.averageSignalStrength + ' ' + self.thresholdUnit + '</div>');
+            }
+
+        return cellDetail;        
+    }
+
+    this.cleanupCellDetails = function() {
+        $("#featureDetailsPanel > .panelHeader").html("Cell Details");
+        $("#featureDetailsPanel > .panelContainer").html("");
+        $("#featureDetailsPanel").slideUp();
     }
     
     this.onFeatureUnselect = function(evt) {

@@ -23,6 +23,8 @@ public class ExportCell implements Serializable {
     public double lon;
     public long nrOfRecMes;
     public long nrOfMisMes;
+    public long numberOfVsiMessages;
+    public long averageSignalStrength;
     public String sourceMmsi;
 
     public double getCoverage() {
