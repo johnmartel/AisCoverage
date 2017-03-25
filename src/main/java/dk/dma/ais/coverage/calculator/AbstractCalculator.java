@@ -14,11 +14,6 @@
  */
 package dk.dma.ais.coverage.calculator;
 
-import java.io.Serializable;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import dk.dma.ais.coverage.AisCoverageGUI;
 import dk.dma.ais.coverage.calculator.geotools.SphereProjection;
 import dk.dma.ais.coverage.data.CustomMessage;
@@ -30,6 +25,12 @@ import dk.dma.ais.message.AisMessage;
 import dk.dma.ais.message.AisMessage5;
 import dk.dma.ais.message.ShipTypeCargo;
 import dk.dma.ais.message.ShipTypeCargo.ShipType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * See CoverageCalculator and DensityPlotCalculator for examples of how to extend this class. When a calculator is added to an
@@ -137,7 +138,7 @@ public abstract class AbstractCalculator implements Serializable {
      */
     public boolean filterMessage(CustomMessage customMessage) {
 
-        if (customMessage.getSog() < 3 || customMessage.getSog() > 50) {
+        if (customMessage.getSog() < 0 || customMessage.getSog() > 150) {
             return true;
         }
         if (customMessage.getCog() == 360) {
