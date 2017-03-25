@@ -1,17 +1,16 @@
 package dk.dma.ais.coverage.fixture;
 
+import dk.dma.ais.coverage.Helper;
+import dk.dma.ais.coverage.calculator.geotools.SphereProjection;
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.TimeSpan;
+import org.apache.commons.lang3.RandomUtils;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import org.apache.commons.lang3.RandomUtils;
-
-import dk.dma.ais.coverage.Helper;
-import dk.dma.ais.coverage.calculator.geotools.SphereProjection;
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.TimeSpan;
 
 public class CellFixture {
 
@@ -44,12 +43,15 @@ public class CellFixture {
         Map<Long, TimeSpan> fixedWidthTimeSpans = new LinkedHashMap<>();
 
         for (int i = 0; i <= 1; i++) {
-            long timespanKey = ZonedDateTime.now(ZoneId.of("UTC")).toInstant().toEpochMilli() + i;
+            long timespanKey = ZonedDateTime.now(ZoneId.of("UTC")).toInstant().toEpochMilli() + (i * 10000);
             TimeSpan timespan = new TimeSpan(new Date(timespanKey));
+            timespan.setLastMessage(new Date(timespanKey + ((i + 1) * 10000)));
             timespan.setMessageCounterSat(RandomUtils.nextInt());
             timespan.setMessageCounterTerrestrial(RandomUtils.nextInt());
             timespan.setMessageCounterTerrestrialUnfiltered(RandomUtils.nextInt());
             timespan.setMissingSignals(RandomUtils.nextInt());
+            timespan.setVsiMessageCounter(RandomUtils.nextInt(1, 10));
+            timespan.setAverageSignalStrength(Math.negateExact(RandomUtils.nextInt(10, 60)));
 
             fixedWidthTimeSpans.put(timespanKey, timespan);
         }
