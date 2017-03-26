@@ -248,7 +248,7 @@ public class TerrestrialCalculator extends AbstractCalculator {
         map.latSize = conf.getLatSize() * multiplicationFactor;
         map.lonSize = conf.getLonSize() * multiplicationFactor;
 
-        HashMap<String, ExportCell> JsonCells = new HashMap<String, ExportCell>();
+        HashMap<String, ExportCell> JsonCells = new HashMap<>();
 
         QueryParams params = new QueryParams();
         params.latStart = latStart;
@@ -281,12 +281,8 @@ public class TerrestrialCalculator extends AbstractCalculator {
             if (superCell == null) {
 
             } else {
-                    ExportCell existing = JsonCells.get(cell.getId());
-                    ExportCell theCell = JsonConverter.toJsonCell(cell, superCell, starttime, endtime);
-                    if (existing == null || theCell.getCoverage() > existing.getCoverage()) {
-                        JsonCells.put(cell.getId(), theCell);
-                    }
-                
+                ExportCell theCell = JsonConverter.toJsonCell(cell, superCell, starttime, endtime);
+                JsonCells.put(cell.getId(), theCell);
             }
         }
 
