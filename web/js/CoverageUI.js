@@ -773,11 +773,9 @@ function CoverageUI () {
     		
     		$('#latSize').html(data.latSize.toFixed(4) + " degrees");
     		$('#lonSize').html(data.lonSize.toFixed(4) + " degrees");
-    		
-            // Check signal or messages
-            var coverageType = $('#coverageType').val();
+
             
-        		var minExpectedMessages = 
+			var minExpectedMessages =
         		$.each(data.cells, function(key, val) {
       			    var points = [
       			        		new OpenLayers.Geometry.Point(val.lon, val.lat),
@@ -788,20 +786,27 @@ function CoverageUI () {
       			    var totalMessages = 0;
                     var coverageValue = 0;
 
-                    if(coverageType == "VDM") {
+                    if(self.isVDMCategory()) {
                         totalMessages = (val.nrOfMisMes+val.nrOfRecMes);
                         coverageValue = val.nrOfRecMes/totalMessages;      
                     } else {
                         totalMessages = val.numberOfVsiMessages;
                         coverageValue = val.averageSignalStrength;
                     }
-                  
 
-      			  var color;
-      			  if(totalMessages >= self.minExpectedMessages){
-    	  			  if(coverageValue >= self.maxThreshold/100){
+                    computeThresholdValue = function (threshold) {
+                    	if (self.isVDMCategory()) {
+                    		return threshold / 100;
+						} else {
+                    		return threshold;
+						}
+					};
+
+      			  	var color;
+      			  	if(totalMessages >= self.minExpectedMessages){
+    	  			  if(coverageValue >= computeThresholdValue(self.maxThreshold)){
     	  				  color ='green';
-    	  			  }else if(coverageValue >= self.minThreshold/100){
+    	  			  }else if(coverageValue >= computeThresholdValue(self.minThreshold)){
     	  				  color ='yellow';
     	  			  }else{
     	  				  color ='red';
@@ -915,8 +920,7 @@ function CoverageUI () {
     }
 
     this.drawCellDetails = function(feature) {
-        var coverageType = $('#coverageType').val();
-        var cellDetail = 
+        var cellDetail =
             '<div class="smallText">Source</div>'+
             '<div class="information">'+feature.mmsi+'</div>'+
             '<div class="smallText">Cell Latitude</div>'+
@@ -924,7 +928,7 @@ function CoverageUI () {
             '<div class="smallText">Cell Longitude</div>'+
             '<div class="information">'+feature.lon.toFixed(4)+'</div>';
 
-            if (coverageType == "VDM") {
+            if (self.isVDMCategory()) {
                 cellDetail = cellDetail.concat(
                     '<div class="smallText">Received Messages</div>'+
                     '<div class="information">'+feature.receivedMessages+'</div>'+
