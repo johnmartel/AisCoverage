@@ -6,8 +6,8 @@ function CoverageUI () {
     this.changed = true;
     this.minThreshold = 50;
     this.maxThreshold = 80;
-    this.savedMinThreshold = -100;
-    this.savedMaxThreshold = -50;
+    this.savedMinThreshold = -110;
+    this.savedMaxThreshold = -75;
     this.thresholdUnit = "%"
 	this.savedThresholdUnit = 'dB';
     this.minExpectedMessages = 100;
@@ -212,7 +212,7 @@ function CoverageUI () {
         $( "#slider-range" ).dragslider({
             range: true,
             min: self.isVDMCategory() ? 0 : -200,
-            max: self.isVDMCategory() ? 100 : 200,
+            max: self.isVDMCategory() ? 100 : 0,
             rangeDrag: true,
             values: [ self.minThreshold, self.maxThreshold ],
             slide: function( event, ui ) {
