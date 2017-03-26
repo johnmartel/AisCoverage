@@ -200,6 +200,10 @@ public class TerrestrialCalculator extends AbstractCalculator {
                 Date stamp = new Date((long) (m1.getTimestamp().getTime() + (i * expectedTransmittingFrequency * 1000)));
                 dataHandler.incrementMissingSignals(AbstractCalculator.SUPERSOURCE_MMSI, projection.y2Lat(xMissing, yMissing),
                         projection.x2Lon(xMissing, yMissing), stamp);
+                for (String source : m1.getSourceList()) {
+                    dataHandler.incrementMissingSignals(source, projection.y2Lat(xMissing, yMissing),
+                            projection.x2Lon(xMissing, yMissing), stamp);
+                }
             }
         }
     }
