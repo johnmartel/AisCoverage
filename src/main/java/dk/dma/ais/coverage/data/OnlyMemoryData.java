@@ -364,6 +364,8 @@ public class OnlyMemoryData implements ICoverageData {
             }
         }
 
+        Ship ship = extractShipFromMessage(aisMessage, shipClass);
+
         if (packet.isVsi()) {
             CustomMessage newMessage = new CustomMessage();
             newMessage.setVsi(true);
@@ -372,14 +374,12 @@ public class OnlyMemoryData implements ICoverageData {
             newMessage.setLongitude(posMessage.getPos().getGeoLocation().getLongitude());
             newMessage.setTimestamp(packet.getVsi().getTimestamp());
 
+            newMessage.addSourceMMSI(baseId);
+            newMessage.setShipMMSI(ship.getMmsi());
+            newMessage.setSourceType(sourceType);
+
             return newMessage;
         } else {
-            // Extract ship
-            Ship ship = getShip(aisMessage.getUserId());
-            if (ship == null) {
-                ship = createShip(aisMessage.getUserId(), shipClass);
-            }
-
             CustomMessage newMessage = new CustomMessage();
             newMessage.setCog((double) posMessage.getCog() / 10);
             newMessage.setSog((double) posMessage.getSog() / 10);
@@ -389,11 +389,19 @@ public class OnlyMemoryData implements ICoverageData {
                     .getLongitude());
             newMessage.setTimestamp(timestamp);
             newMessage.addSourceMMSI(baseId);
-            newMessage.setShipMMSI(aisMessage.getUserId());
+            newMessage.setShipMMSI(ship.getMmsi());
             newMessage.setSourceType(sourceType);
 
             return newMessage;
         }
+    }
+
+    private Ship extractShipFromMessage(AisMessage aisMessage, ShipClass shipClass) {
+        Ship ship = getShip(aisMessage.getUserId());
+        if (ship == null) {
+            ship = createShip(aisMessage.getUserId(), shipClass);
+        }
+        return ship;
     }
 
     @Override

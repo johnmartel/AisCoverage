@@ -207,11 +207,12 @@ public class TerrestrialCalculator extends AbstractCalculator {
  
     private void approveMessage(CustomMessage approvedMessage) {
         for (String source : approvedMessage.getSourceList()) {
-            dataHandler.incrementReceivedSignals(source, approvedMessage.getLatitude(),
-                    approvedMessage.getLongitude(), approvedMessage.getTimestamp());
-            
+            if (approvedMessage.isVsi()) {
+                dataHandler.incrementReceivedVsiMessage(source, approvedMessage.getLatitude(), approvedMessage.getLongitude(), approvedMessage.getTimestamp(), approvedMessage.getSignalStrength());
+            } else {
+                dataHandler.incrementReceivedSignals(source, approvedMessage.getLatitude(), approvedMessage.getLongitude(), approvedMessage.getTimestamp());
+            }
         }
-//        System.out.println();
     }
 
     /**
