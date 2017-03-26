@@ -397,13 +397,6 @@ public class SatCalculator extends AbstractCalculator {
      */
     @Override
     public boolean filterMessage(CustomMessage customMessage) {
-
-        // if(customMessage.getSog() < 3 || customMessage.getSog() > 50)
-        // return true;
-        if (customMessage.getCog() == 360) {
-            return true;
-        }
-
         return false;
     }
 

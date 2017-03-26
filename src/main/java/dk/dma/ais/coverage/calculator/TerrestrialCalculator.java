@@ -291,6 +291,11 @@ public class TerrestrialCalculator extends AbstractCalculator {
         return map;
     }
 
+    @Override
+    public boolean filterMessage(CustomMessage customMessage) {
+        return false;
+    }
+
     // Getters and setters
     private double getY(double seconds, Long p1Time, Long p2Time, double p1y, double p2y) {
         double distanceInMeters = p2y - p1y;
