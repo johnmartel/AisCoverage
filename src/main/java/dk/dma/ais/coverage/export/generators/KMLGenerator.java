@@ -14,19 +14,18 @@
  */
 package dk.dma.ais.coverage.export.generators;
 
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.Source;
+import dk.dma.ais.coverage.export.ExportDataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.Source;
 
 //TODO retrieve sources with larger cells.
 //TODO retrieve cell data from both super and individual source
@@ -37,9 +36,9 @@ public class KMLGenerator {
 
     // public static void generateKML(CoverageCalculator calc, String path) {
     public static void generateKML(Collection<Source> grids, double latSize, double lonSize, int multiplicity,
-            HttpServletResponse response) {
+                                   ExportDataType exportDataType, HttpServletResponse response) {
 
-        LOG.info("startet kml generation");
+        LOG.info("Started KML generation");
 
         HttpServletResponse out = response;
 
@@ -103,7 +102,7 @@ public class KMLGenerator {
         writeLine("</Style>", out);
 
         for (Source grid : grids) {
-            generateGrid(grid.getIdentifier(), grid.getGrid().values(), out, latSize * multiplicity, lonSize * multiplicity);
+            generateGrid(grid.getIdentifier(), grid.getGrid().values(), out, latSize * multiplicity, lonSize * multiplicity, exportDataType);
         }
 
         writeLine("</Document>", out);
@@ -116,7 +115,7 @@ public class KMLGenerator {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        LOG.info("Finished kml generation");
+        LOG.info("Finished KML generation");
     }
 
     private static void writeLine(String line, HttpServletResponse out) {
@@ -128,45 +127,41 @@ public class KMLGenerator {
         }
     }
 
-    private static void generateGrid(String bsMmsi, Collection<Cell> cells, HttpServletResponse out, double latSize, double lonSize) {
-
+    private static void generateGrid(String bsMmsi, Collection<Cell> cells, HttpServletResponse out, double latSize, double lonSize, ExportDataType exportDataType) {
         writeLine("<Folder>", out);
-        writeLine("<name>" + bsMmsi + "</name>", out);
-        writeLine("<open>0</open>", out);
+        writeLine("    <name>" + bsMmsi + "</name>", out);
+        writeLine("    <open>0</open>", out);
         for (Cell cell : cells) {
+            double dataToExport;
+            if (exportDataType == ExportDataType.RECEIVED_MESSAGES) {
+                dataToExport = cell.getCoverage();
+            } else {
+                dataToExport = cell.getAverageSignalStrength();
+            }
 
-            // We ignore cells, where average number of messages, is below 10 per ship
-            // Maybe there is a bug in AISMessage system, that assign some messages to wrong Base Stations
-            // Bug found and fixed
-            // if (cell.NOofReceivedSignals / cell.ships.size() > 10) {
-
-            if (cell.getCoverage() > 0.8) { // green
+            if (dataToExport > exportDataType.greenThreshold()) { // green
                 generatePlacemark("#greenStyle", cell, 300, out, latSize, lonSize);
-            } else if (cell.getCoverage() > 0.5) { // orange
+            } else if (dataToExport > exportDataType.redThreshold()) { // orange
                 generatePlacemark("#orangeStyle", cell, 200, out, latSize, lonSize);
             } else { // red
                 generatePlacemark("#redStyle", cell, 100, out, latSize, lonSize);
             }
-
-            // }
-
         }
 
         writeLine("</Folder>", out);
-
     }
 
     private static void generatePlacemark(String style, Cell cell, int z, HttpServletResponse out, double latSize, double lonSize) {
 
-        writeLine("<Placemark>", out);
-        writeLine("<name>" + cell.getId() + "</name>", out);
-        writeLine("<styleUrl>" + style + "</styleUrl>", out);
-        writeLine("<Polygon>", out);
-        writeLine("<altitudeMode>relativeToGround</altitudeMode>", out);
-        writeLine("<tessellate>1</tessellate>", out);
-        writeLine("<outerBoundaryIs>", out);
-        writeLine("<LinearRing>", out);
-        writeLine("<coordinates>", out);
+        writeLine("    <Placemark>", out);
+        writeLine("        <name>" + cell.getId() + "</name>", out);
+        writeLine("        <styleUrl>" + style + "</styleUrl>", out);
+        writeLine("        <Polygon>", out);
+        writeLine("            <altitudeMode>relativeToGround</altitudeMode>", out);
+        writeLine("            <tessellate>1</tessellate>", out);
+        writeLine("            <outerBoundaryIs>", out);
+        writeLine("                <LinearRing>", out);
+        writeLine("                    <coordinates>", out);
 
         writeLine(
                 cell.getLongitude() + "," + cell.getLatitude() + "," + z + " " + (cell.getLongitude() + lonSize) + ","
@@ -174,12 +169,11 @@ public class KMLGenerator {
                         + (cell.getLatitude() + latSize) + "," + z + " " + cell.getLongitude() + ","
                         + (cell.getLatitude() + latSize) + "," + z, out);
 
-        writeLine("</coordinates>", out);
-        writeLine("</LinearRing>", out);
-        writeLine("</outerBoundaryIs>", out);
-        writeLine("</Polygon>", out);
-        writeLine("</Placemark>", out);
-
+        writeLine("                    </coordinates>", out);
+        writeLine("                </LinearRing>", out);
+        writeLine("            </outerBoundaryIs>", out);
+        writeLine("        </Polygon>", out);
+        writeLine("    </Placemark>", out);
     }
 
 }

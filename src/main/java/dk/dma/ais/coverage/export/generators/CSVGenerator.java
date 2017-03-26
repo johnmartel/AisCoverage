@@ -14,19 +14,17 @@
  */
 package dk.dma.ais.coverage.export.generators;
 
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.Source;
 
 public class CSVGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(KMLGenerator.class);
@@ -35,7 +33,7 @@ public class CSVGenerator {
     public static void generateCSV(Collection<Source> grids, double latSize, double lonSize, int multiplicity,
             HttpServletResponse response) {
 
-        LOG.info("startet csv generation");
+        LOG.info("Started CSV generation");
 
         HttpServletResponse out = response;
 
@@ -61,7 +59,7 @@ public class CSVGenerator {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        LOG.info("Finished csv generation");
+        LOG.info("Finished CSV generation");
     }
 
     private static void writeLine(String line, HttpServletResponse out) {
@@ -74,21 +72,19 @@ public class CSVGenerator {
     }
 
     private static void generateGrid(String bsMmsi, Collection<Cell> cells, HttpServletResponse out, double latSize, double lonSize) {
-
         for (Cell cell : cells) {
+            StringBuilder lineBuilder = new StringBuilder();
+            lineBuilder.append(cell.getLatitude()).append(",")
+                    .append(cell.getLongitude()).append(",")
+                    .append(cell.getLatitude() + latSize).append(",")
+                    .append(cell.getLongitude() + lonSize).append(",")
+                    .append(cell.getNOofReceivedSignals()).append(",")
+                    .append(cell.getNOofMissingSignals()).append(",")
+                    .append(cell.getCoverage() * 100).append(",")
+                    .append(cell.getNumberOfVsiMessages()).append(",")
+                    .append(cell.getAverageSignalStrength());
 
-            // We ignore cells, where average number of messages, is below 10 per ship
-            // Maybe there is a bug in AISMessage system, that assign some messages to wrong Base Stations
-            // Bug found and fixed
-            // if (cell.NOofReceivedSignals / cell.ships.size() > 10) {
-
-            writeLine(
-                    cell.getLatitude() + "," + cell.getLongitude() + "," + (cell.getLatitude() + latSize) + ","
-                            + (cell.getLongitude() + lonSize) + "," + cell.getNOofReceivedSignals() + ","
-                            + cell.getNOofMissingSignals() + "," + (cell.getCoverage() * 100), out);
-
-            // }
-
+            writeLine(lineBuilder.toString(), out);
         }
     }
 

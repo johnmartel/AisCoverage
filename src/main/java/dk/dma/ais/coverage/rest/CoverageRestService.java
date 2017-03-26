@@ -18,8 +18,17 @@ import dk.dma.ais.coverage.AisCoverage;
 import dk.dma.ais.coverage.CoverageHandler;
 import dk.dma.ais.coverage.Helper;
 import dk.dma.ais.coverage.calculator.TerrestrialCalculator;
-import dk.dma.ais.coverage.data.*;
-import dk.dma.ais.coverage.export.data.*;
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.ICoverageData;
+import dk.dma.ais.coverage.data.OnlyMemoryData;
+import dk.dma.ais.coverage.data.Source;
+import dk.dma.ais.coverage.data.TimeSpan;
+import dk.dma.ais.coverage.export.ExportDataType;
+import dk.dma.ais.coverage.export.data.ExportShipTimeSpan;
+import dk.dma.ais.coverage.export.data.JSonCoverageMap;
+import dk.dma.ais.coverage.export.data.JsonConverter;
+import dk.dma.ais.coverage.export.data.JsonSource;
+import dk.dma.ais.coverage.export.data.Status;
 import dk.dma.ais.coverage.export.generators.ChartGenerator;
 import dk.dma.ais.coverage.export.generators.KMLGenerator;
 import dk.dma.ais.coverage.export.generators.XMLGenerator;
@@ -29,14 +38,25 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 //import dk.dma.ais.coverage.export.CSVGenerator;
 
@@ -104,8 +124,6 @@ public class CoverageRestService {
         String area = request.getParameter("area");
         long starttime = Long.parseLong(request.getParameter("starttime"));
         long endtime = Long.parseLong(request.getParameter("endtime"));
-//        System.out.println(starttime);
-//        System.out.println(endtime);
 
         String[] areaArray = area.split(",");
 
@@ -135,13 +153,13 @@ public class CoverageRestService {
     @Path("export")
     @Produces(MediaType.APPLICATION_JSON)
     public Object export(@QueryParam("exportType") String exportType, @QueryParam("exportMultiFactor") String exportMultiFactor,
-            @Context HttpServletResponse response, @QueryParam("startTime") String startTime, @QueryParam("endTime") String endTime) {
-        // return null;
+            @Context HttpServletResponse response, @QueryParam("startTime") String startTime, @QueryParam("endTime") String endTime,
+            @QueryParam("exportDataType") String exportDataType) {
+
         int multiplicity = Integer.parseInt(exportMultiFactor);
-        long starttime = Long.parseLong(startTime);
-        long endtime = Long.parseLong(endTime);
-//        System.out.println(starttime);
-//        System.out.println(endtime);
+        Date starttime = new Date(Long.parseLong(startTime));
+        Date endtime = new Date(Long.parseLong(endTime));
+        ExportDataType dataType = ExportDataType.forType(exportDataType);
 
         //
         // // BaseStationHandler gh = new BaseStationHandler();
@@ -179,26 +197,23 @@ public class CoverageRestService {
 
                 Cell activesbscell = superbs.getGrid().get(cell.getId());
                 if (activesbscell != null) {
-                    int receivedsignals = cell.getNOofReceivedSignals(new Date(starttime), new Date(endtime));
+                    int receivedsignals = cell.getNOofReceivedSignals(starttime, endtime);
                     dhCell.addReceivedSignals(receivedsignals);
-                    int sbstotalmessages = activesbscell.getNOofReceivedSignals(new Date(starttime), new Date(endtime))
-                            + activesbscell.getNOofMissingSignals(new Date(starttime), new Date(endtime));
-                    dhCell.addNOofMissingSignals(sbstotalmessages - receivedsignals);
-                }
 
-                // LOG.debug("cell for export created: " + summedbs.getCell(cell.getLatitude(),
-                // cell.getLongitude()).getNOofReceivedSignals() + "-" + summedbs.getCell(cell.getLatitude(),
-                // cell.getLongitude()).getNOofMissingSignals());
+                    int sbstotalmessages = activesbscell.getNOofReceivedSignals(starttime, endtime)
+                            + activesbscell.getNOofMissingSignals(starttime, endtime);
+                    dhCell.addNOofMissingSignals(sbstotalmessages - receivedsignals);
+
+                    dhCell.addVsiMessages(activesbscell.getNumberOfVsiMessages(starttime, endtime),
+                            activesbscell.getAverageSignalStrength(starttime, endtime));
+                }
             }
         }
         if (exportType.equals("KML")) {
-            // System.out.println(expotype);
-            KMLGenerator.generateKML(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, response);
+            KMLGenerator.generateKML(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, dataType, response);
         } else if (exportType.equals("CSV")) {
-            // System.out.println(expotype);
             // CSVGenerator.generateCSV(dh.getSources(), Helper.latSize, Helper.lonSize, multiplicity, response);
         } else if (exportType.equals("XML")) {
-            // System.out.println(expotype);
             XMLGenerator.generateXML(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, response);
         } else {
             System.out.println("wrong exporttype");

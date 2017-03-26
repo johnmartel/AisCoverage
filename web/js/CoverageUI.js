@@ -16,6 +16,9 @@ function CoverageUI() {
     this.endDate;	//Is the end time of the analysis or the point where the analysis is now (used for sliding window)
     this.selectedStartDate;
     this.selectedEndDate;
+    this.exportDataType = 'received_messages';
+    this.savedExportDataType = 'signal_strength';
+
     var topleftPoint;//points which define sat box
     var bottomRightPoint
     var shiptrackactive = false;
@@ -90,17 +93,23 @@ function CoverageUI() {
             var maxThresholdToSave = self.maxThreshold;
             var minThresholdToSave = self.minThreshold;
             var thresholdUnitToSave = self.thresholdUnit;
+            var exportDataTypeToSave = self.exportDataType;
 
             self.maxThreshold = self.savedMaxThreshold;
             self.minThreshold = self.savedMinThreshold;
             self.thresholdUnit = self.savedThresholdUnit;
+            self.exportDataType = self.savedExportDataType;
 
             self.savedMaxThreshold = maxThresholdToSave;
             self.savedMinThreshold = minThresholdToSave;
             self.savedThresholdUnit = thresholdUnitToSave;
+            self.savedExportDataType = exportDataTypeToSave;
 
             self.drawSlider();
             self.cleanupCellDetails();
+
+            $('#exportDataType').val(self.exportDataType);
+
             self.changed = true;
         });
 

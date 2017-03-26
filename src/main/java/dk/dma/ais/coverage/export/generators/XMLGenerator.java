@@ -14,28 +14,25 @@
  */
 package dk.dma.ais.coverage.export.generators;
 
+import dk.dma.ais.coverage.data.Cell;
+import dk.dma.ais.coverage.data.Source;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import dk.dma.ais.coverage.data.Cell;
-import dk.dma.ais.coverage.data.Source;
-
 public class XMLGenerator {
-
     private static final Logger LOG = LoggerFactory.getLogger(XMLGenerator.class);
 
     public static void generateXML(Collection<Source> grids, double latSize, double lonSize, int multiplicity,
             HttpServletResponse response) {
 
-        LOG.info("startet csv generation");
+        LOG.info("Started XML generation");
 
         HttpServletResponse out = response;
 
@@ -63,7 +60,7 @@ public class XMLGenerator {
             LOG.error(e.getMessage());
             e.printStackTrace();
         }
-        LOG.info("Finished csv generation");
+        LOG.info("Finished XML generation");
     }
 
     private static void writeLine(String line, HttpServletResponse out) {
@@ -76,25 +73,18 @@ public class XMLGenerator {
     }
 
     private static void generateGrid(String bsMmsi, Collection<Cell> cells, HttpServletResponse out, double latSize, double lonSize) {
-
         for (Cell cell : cells) {
-
-            // We ignore cells, where average number of messages, is below 10 per ship
-            // Maybe there is a bug in AISMessage system, that assign some messages to wrong Base Stations
-            // Bug found and fixed
-            // if (cell.NOofReceivedSignals / cell.ships.size() > 10) {
-
             writeLine("<cell>", out);
-            writeLine("<startlat>" + cell.getLatitude() + "</startlat>", out);
-            writeLine("<startlon>" + cell.getLongitude() + "</startlon>", out);
-            writeLine("<endlat>" + (cell.getLatitude() + latSize) + "</endlat>", out);
-            writeLine("<endlon>" + (cell.getLongitude() + lonSize) + "</endlon>", out);
-            writeLine("<received>" + cell.getNOofReceivedSignals() + "</received>", out);
-            writeLine("<missing>" + cell.getNOofMissingSignals() + "</missing>", out);
-            writeLine("<coveragepercentage>" + (cell.getCoverage() * 100) + "</coveragepercentage>", out);
+            writeLine("    <startlat>" + cell.getLatitude() + "</startlat>", out);
+            writeLine("    <startlon>" + cell.getLongitude() + "</startlon>", out);
+            writeLine("    <endlat>" + (cell.getLatitude() + latSize) + "</endlat>", out);
+            writeLine("    <endlon>" + (cell.getLongitude() + lonSize) + "</endlon>", out);
+            writeLine("    <received>" + cell.getNOofReceivedSignals() + "</received>", out);
+            writeLine("    <missing>" + cell.getNOofMissingSignals() + "</missing>", out);
+            writeLine("    <coveragepercentage>" + (cell.getCoverage() * 100) + "</coveragepercentage>", out);
+            writeLine("    <receivedvsimessages>" + cell.getNumberOfVsiMessages() + "</receivedvsimessages>", out);
+            writeLine("    <averagesignalstrength>" + cell.getAverageSignalStrength() + "</averagesignalstrength>", out);
             writeLine("</cell>", out);
-
-            // }
         }
     }
 }
