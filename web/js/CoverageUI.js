@@ -6,7 +6,10 @@ function CoverageUI () {
     this.changed = true;
     this.minThreshold = 50;
     this.maxThreshold = 80;
+    this.savedMinThreshold = -100;
+    this.savedMaxThreshold = -50;
     this.thresholdUnit = "%"
+	this.savedThresholdUnit = 'dB';
     this.minExpectedMessages = 100;
     this.exportMultiplicationFactor = 4;
     this.startDate; //is the time when the analysis started (used for sliding window)
@@ -85,16 +88,17 @@ function CoverageUI () {
     	});
 
         $(document).on('change', "#coverageType", function(e) {
-            coverageType=$(this).val();
-            if ($(this).val() == "VDM") {
-                self.maxThreshold = 80;
-                self.minThreshold = 50;
-                self.thresholdUnit = "%";
-            } else {
-                self.maxThreshold = -50;
-                self.minThreshold = -100;
-                self.thresholdUnit = "db";
-            }
+			var maxThresholdToSave = self.maxThreshold;
+			var minThresholdToSave = self.minThreshold;
+			var thresholdUnitToSave = self.thresholdUnit;
+
+			self.maxThreshold = self.savedMaxThreshold;
+			self.minThreshold = self.savedMinThreshold;
+			self.thresholdUnit = self.savedThresholdUnit;
+
+			self.savedMaxThreshold = maxThresholdToSave;
+			self.savedMinThreshold = minThresholdToSave;
+			self.savedThresholdUnit = thresholdUnitToSave;
 
             self.drawSlider();
             self.cleanupCellDetails();
