@@ -267,9 +267,7 @@ public class TerrestrialCalculator extends AbstractCalculator {
         List<Cell> celllistSuper = dataHandler.getCells(params);
         Map<String, Cell> superMap = new HashMap<String, Cell>();
         for (Cell cell : celllistSuper) {
-            if (cell.getNOofReceivedSignals() > 0) {
-                superMap.put(cell.getId(), cell);
-            }
+            superMap.put(cell.getId(), cell);
         }
 
         if (!celllist.isEmpty()) {

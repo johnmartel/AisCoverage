@@ -199,9 +199,7 @@ public class OnlyMemoryData implements ICoverageData {
 
                 // add cells for particular source to cell-list.
                 for (Cell cell : cellMultiplicationSource.getGrid().values()) {
-                    if (cell.getNOofReceivedSignals() > 0) {
-                        cells.add(cell);
-                    }
+                    cells.add(cell);
                 }
             }
         }
