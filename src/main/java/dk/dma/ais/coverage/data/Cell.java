@@ -27,6 +27,7 @@ public class Cell {
     private int averageSignalStrength;
     private double latitude;
     private double longitude;
+    private final String id;
     private List<TimeSpan> timeSpans;
     private Map<Long, TimeSpan> fixedWidthSpans = new HashMap<Long, TimeSpan>();
 
@@ -49,11 +50,13 @@ public class Cell {
     public Cell(Source grid, double lat, double lon, String id) {
         this.latitude = lat;
         this.longitude = lon;
+        this.id = id;
     }
 
     public Cell(double lat, double lon, String id) {
         this.latitude = lat;
         this.longitude = lon;
+        this.id = id;
     }
 
     public synchronized void incrementNOofReceivedSignals() {
@@ -103,7 +106,7 @@ public class Cell {
     }
 
     public String getId() {
-        return this.latitude + "_" + this.longitude;
+        return this.id;
     }
 
     public synchronized int getNOofReceivedSignals(Date starttime, Date endTime) {
