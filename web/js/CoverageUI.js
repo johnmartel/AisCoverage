@@ -222,8 +222,8 @@ function CoverageUI() {
     this.drawSlider = function () {
         $("#slider-range").dragslider({
             range: true,
-            min: self.isVDMCategory() ? 0 : -200,
-            max: self.isVDMCategory() ? 100 : 0,
+            min: self.isVDMCategory() ? 0 : -120,
+            max: self.isVDMCategory() ? 100 : -85,
             rangeDrag: true,
             values: [self.minThreshold, self.maxThreshold],
             slide: function (event, ui) {
