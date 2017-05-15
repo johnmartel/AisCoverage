@@ -4,7 +4,7 @@ package dk.dma.ais.coverage.export;
  * Supported data types for export.
  */
 public enum ExportDataType {
-    RECEIVED_MESSAGES(0.8, 0.5), SIGNAL_STRENGTH(-75, -110);
+    RECEIVED_MESSAGES(0.5, 0.2), SIGNAL_STRENGTH(-101, -107);
 
     private final double greenThreshold;
     private final double redThreshold;

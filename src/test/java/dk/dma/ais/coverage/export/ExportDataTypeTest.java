@@ -23,12 +23,12 @@ public class ExportDataTypeTest {
     }
 
     @Test
-    public void givenReceivedMessages_whenGreenThreshold_thenValueIs80Percent() {
-        assertThat(ExportDataType.RECEIVED_MESSAGES.greenThreshold(), is(closeTo(0.8, 0.001)));
+    public void givenReceivedMessages_whenGreenThreshold_thenValueIs50Percent() {
+        assertThat(ExportDataType.RECEIVED_MESSAGES.greenThreshold(), is(closeTo(0.5, 0.001)));
     }
 
     @Test
-    public void givenReceivedMessages_whenRedThreshold_thenValueIs50Percent() {
-        assertThat(ExportDataType.RECEIVED_MESSAGES.redThreshold(), is(closeTo(0.5, 0.001)));
+    public void givenReceivedMessages_whenRedThreshold_thenValueIs20Percent() {
+        assertThat(ExportDataType.RECEIVED_MESSAGES.redThreshold(), is(closeTo(0.2, 0.001)));
     }
 }

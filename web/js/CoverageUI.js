@@ -4,10 +4,10 @@ function CoverageUI() {
     this.sources = [];
     this.selectedSource = null;
     this.changed = true;
-    this.minThreshold = 50;
-    this.maxThreshold = 80;
-    this.savedMinThreshold = -110;
-    this.savedMaxThreshold = -75;
+    this.minThreshold = 20;
+    this.maxThreshold = 50;
+    this.savedMinThreshold = -107;
+    this.savedMaxThreshold = -101;
     this.thresholdUnit = "%"
     this.savedThresholdUnit = 'dB';
     this.minExpectedMessages = 100;
