@@ -9,7 +9,7 @@ function CoverageUI() {
     this.savedMinThreshold = -107;
     this.savedMaxThreshold = -101;
     this.thresholdUnit = "%"
-    this.savedThresholdUnit = 'dB';
+    this.savedThresholdUnit = 'dBm';
     this.minExpectedMessages = 100;
     this.exportMultiplicationFactor = 4;
     this.startDate; //is the time when the analysis started (used for sliding window)
