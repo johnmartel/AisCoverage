@@ -67,7 +67,8 @@ public class KMLGenerator {
         writeLine("        <color>ff0000ff</color>", out);
         writeLine("    </LineStyle>", out);
         writeLine("    <PolyStyle>", out);
-        writeLine("        <color>ff0000ff</color>", out);
+        writeLine("        <color>550000ff</color>", out);
+        writeLine("        <fill>1</fill>", out);
         writeLine("    </PolyStyle>", out);
         writeLine("</Style>", out);
         writeLine("<Style id=\"orangeStyle\">", out);
@@ -82,7 +83,8 @@ public class KMLGenerator {
         writeLine("        <color>ff00aaff</color>", out);
         writeLine("    </LineStyle>", out);
         writeLine("    <PolyStyle>", out);
-        writeLine("        <color>ff00aaff</color>", out);
+        writeLine("        <color>5500aaff</color>", out);
+        writeLine("        <fill>1</fill>", out);
         writeLine("    </PolyStyle>", out);
         writeLine("</Style>", out);
         writeLine("<Style id=\"greenStyle\">", out);
@@ -97,8 +99,9 @@ public class KMLGenerator {
         writeLine("        <color>ff00ff00</color>", out);
         writeLine("    </LineStyle>", out);
         writeLine("    <PolyStyle>", out);
-        writeLine("    <color>ff00ff55</color>", out);
-        writeLine("</PolyStyle>", out);
+        writeLine("        <color>5500ff55</color>", out);
+        writeLine("        <fill>1</fill>", out);
+        writeLine("    </PolyStyle>", out);
         writeLine("</Style>", out);
 
         for (Source grid : grids) {
