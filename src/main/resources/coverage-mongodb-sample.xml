@@ -18,6 +18,7 @@
 			xsi:type="distributerConsumerConfiguration">
 			<name>UNFILTERED</name>
 		</consumer>
+		<busQueueSize>100000</busQueueSize>
 	</aisbus>
 
 	<!--Sets the grid granularity; the latitude and longitude minimum degree -->
