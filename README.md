@@ -20,6 +20,10 @@ AisCoverage is a tool for calculating how well AIS receivers (sources) cover a g
 M2 Eclipse plugin or 
     
     ./mvnw eclipse:eclipse
+    
+## Running
+
+    target/ais-coverage-[version]-dist/ais-coverage-[version]/coverage.sh
 
 ## Rest API ##
 
