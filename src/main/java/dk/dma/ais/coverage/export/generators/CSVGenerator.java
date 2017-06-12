@@ -42,11 +42,10 @@ public class CSVGenerator {
 
         String fileName = "aiscoverage-" + dateFormat.format(date) + "_latSize " + latSize + "_lonSize " + lonSize
                 + "multiplicationfactor" + multiplicity + ".csv";
-        // out.setContentType("application/vnd.google-earth.kml+xml");
         out.setContentType("text/csv");
         out.setHeader("Content-Disposition", "attachment; filename=" + fileName);
 
-        writeLine("latstart, longstart, latend, longend, received, missing, coverage percentage", out);
+        writeLine("latstart, longstart, latend, longend, received, missing, coverage percentage, receivedvsimessages, averagesignalstrength", out);
 
         for (Source grid : grids) {
             generateGrid(grid.getIdentifier(), grid.getGrid().values(), out, latSize * multiplicity, lonSize * multiplicity);

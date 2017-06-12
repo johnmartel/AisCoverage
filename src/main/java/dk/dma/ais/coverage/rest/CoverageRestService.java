@@ -29,6 +29,7 @@ import dk.dma.ais.coverage.export.data.JSonCoverageMap;
 import dk.dma.ais.coverage.export.data.JsonConverter;
 import dk.dma.ais.coverage.export.data.JsonSource;
 import dk.dma.ais.coverage.export.data.Status;
+import dk.dma.ais.coverage.export.generators.CSVGenerator;
 import dk.dma.ais.coverage.export.generators.ChartGenerator;
 import dk.dma.ais.coverage.export.generators.KMLGenerator;
 import dk.dma.ais.coverage.export.generators.XMLGenerator;
@@ -212,7 +213,7 @@ public class CoverageRestService {
         if (exportType.equals("KML")) {
             KMLGenerator.generateKML(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, dataType, response);
         } else if (exportType.equals("CSV")) {
-            // CSVGenerator.generateCSV(dh.getSources(), Helper.latSize, Helper.lonSize, multiplicity, response);
+            CSVGenerator.generateCSV(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, response);
         } else if (exportType.equals("XML")) {
             XMLGenerator.generateXML(dh.getSources(), AisCoverage.get().getConf().getLatSize(), AisCoverage.get().getConf().getLonSize(), multiplicity, response);
         } else {
