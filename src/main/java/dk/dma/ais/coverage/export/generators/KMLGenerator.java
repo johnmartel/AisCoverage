@@ -99,7 +99,7 @@ public class KMLGenerator {
         writeLine("        <color>ff00ff00</color>", out);
         writeLine("    </LineStyle>", out);
         writeLine("    <PolyStyle>", out);
-        writeLine("        <color>5500ff55</color>", out);
+        writeLine("        <color>5500ff00</color>", out);
         writeLine("        <fill>1</fill>", out);
         writeLine("    </PolyStyle>", out);
         writeLine("</Style>", out);
@@ -143,11 +143,11 @@ public class KMLGenerator {
             }
 
             if (dataToExport > exportDataType.greenThreshold()) { // green
-                generatePlacemark("#greenStyle", cell, 300, out, latSize, lonSize);
+                generatePlacemark("#greenStyle", cell, 0, out, latSize, lonSize);
             } else if (dataToExport > exportDataType.redThreshold()) { // orange
-                generatePlacemark("#orangeStyle", cell, 200, out, latSize, lonSize);
+                generatePlacemark("#orangeStyle", cell, 0, out, latSize, lonSize);
             } else { // red
-                generatePlacemark("#redStyle", cell, 100, out, latSize, lonSize);
+                generatePlacemark("#redStyle", cell, 0, out, latSize, lonSize);
             }
         }
 
@@ -160,17 +160,18 @@ public class KMLGenerator {
         writeLine("        <name>" + cell.getId() + "</name>", out);
         writeLine("        <styleUrl>" + style + "</styleUrl>", out);
         writeLine("        <Polygon>", out);
-        writeLine("            <altitudeMode>relativeToGround</altitudeMode>", out);
+        writeLine("            <altitudeMode>clampedToGround</altitudeMode>", out);
         writeLine("            <tessellate>1</tessellate>", out);
         writeLine("            <outerBoundaryIs>", out);
         writeLine("                <LinearRing>", out);
         writeLine("                    <coordinates>", out);
 
         writeLine(
-                cell.getLongitude() + "," + cell.getLatitude() + "," + z + " " + (cell.getLongitude() + lonSize) + ","
-                        + cell.getLatitude() + "," + z + " " + (cell.getLongitude() + lonSize) + ","
-                        + (cell.getLatitude() + latSize) + "," + z + " " + cell.getLongitude() + ","
-                        + (cell.getLatitude() + latSize) + "," + z, out);
+                cell.getLongitude() + "," + cell.getLatitude() + "," + z + " "
+                        + (cell.getLongitude() + lonSize) + "," + cell.getLatitude() + "," + z + " "
+                        + (cell.getLongitude() + lonSize) + "," + (cell.getLatitude() + latSize) + "," + z + " "
+                        + cell.getLongitude() + "," + (cell.getLatitude() + latSize) + "," + z + " "
+                        + cell.getLongitude() + "," + cell.getLatitude() + "," + z, out);
 
         writeLine("                    </coordinates>", out);
         writeLine("                </LinearRing>", out);
