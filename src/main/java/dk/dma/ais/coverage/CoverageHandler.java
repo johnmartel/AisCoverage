@@ -37,7 +37,6 @@ import java.util.Map;
  */
 public class CoverageHandler {
     private static final Logger LOG = LoggerFactory.getLogger(CoverageHandler.class);
-    public static final int MESSAGE_BUFFER_SIZE = 10000;
 
     private List<AbstractCalculator> calculators = new ArrayList<AbstractCalculator>();
     private ICoverageData dataHandler;
@@ -49,12 +48,16 @@ public class CoverageHandler {
 
         @Override
         protected boolean removeEldestEntry(Map.Entry<String, CustomMessage> eldest) {
-            if (this.size() > MESSAGE_BUFFER_SIZE) {
+            if (this.size() > getMessageBufferSize()) {
                 process(eldest.getValue());
             }
-            return this.size() > MESSAGE_BUFFER_SIZE;
+            return this.size() > getMessageBufferSize();
         }
     };
+
+    private int getMessageBufferSize() {
+        return this.conf.getMessageBufferSize();
+    }
 
     //Fields used for debugging purposes
     private int unfiltCount;
@@ -66,6 +69,8 @@ public class CoverageHandler {
     public CoverageHandler(AisCoverageConfiguration conf) {
         this.conf=conf;
         Helper.conf=conf;
+
+        LOG.info("Message buffer size initialized with value [{}]", getMessageBufferSize());
 
         //Creating up data handler
         dataHandler = new OnlyMemoryData();

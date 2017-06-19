@@ -14,12 +14,9 @@
  */
 package dk.dma.ais.coverage.configuration;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import dk.dma.ais.configuration.bus.AisBusConfiguration;
+import dk.dma.ais.coverage.data.Source_UserProvided;
+import dk.dma.ais.coverage.web.WebServerConfiguration;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -27,10 +24,12 @@ import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import dk.dma.ais.configuration.bus.AisBusConfiguration;
-import dk.dma.ais.coverage.data.Source_UserProvided;
-import dk.dma.ais.coverage.web.WebServerConfiguration;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Class to represent AIS coverage configuration. To be marshalled and
@@ -43,6 +42,7 @@ public class AisCoverageConfiguration {
     private WebServerConfiguration serverConfiguration;
     private double latSize = 0.0225225225;
     private double lonSize = 0.0386812541;
+    private int messageBufferSize = 10000;
     private int verbosityLevel;
     private DatabaseConfiguration dbConf = new DatabaseConfiguration();
     private Map<String, Source_UserProvided> sourcenames = new HashMap<String, Source_UserProvided>();
@@ -77,6 +77,7 @@ public class AisCoverageConfiguration {
         this.aisbusConfiguration = aisbusConfiguration;
     }
 
+
     public WebServerConfiguration getServerConfiguration() {
         return serverConfiguration;
     }
@@ -100,6 +101,14 @@ public class AisCoverageConfiguration {
 
     public double getLonSize() {
         return this.lonSize;
+    }
+
+    public int getMessageBufferSize() {
+        return messageBufferSize;
+    }
+
+    public void setMessageBufferSize(int messageBufferSize) {
+        this.messageBufferSize = messageBufferSize;
     }
 
     public static void save(String filename, AisCoverageConfiguration conf)
