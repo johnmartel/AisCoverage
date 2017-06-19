@@ -22,7 +22,7 @@ import dk.dma.ais.coverage.data.Ship.ShipClass;
 import dk.dma.ais.coverage.data.Source.ReceiverType;
 import dk.dma.ais.message.AisMessage;
 import dk.dma.ais.message.AisMessage4;
-import dk.dma.ais.message.AisPositionMessage;
+import dk.dma.ais.message.IVesselPositionMessage;
 import dk.dma.ais.packet.AisPacket;
 import dk.dma.ais.packet.AisPacketTags;
 import dk.dma.ais.packet.AisPacketTags.SourceType;
@@ -275,7 +275,7 @@ public class OnlyMemoryData implements ICoverageData {
         ReceiverType receiverType = ReceiverType.NOTDEFINED;
         Date timestamp = null;
         ShipClass shipClass = null;
-        AisPositionMessage posMessage;
+        IVesselPositionMessage posMessage;
         SourceType sourceType = SourceType.TERRESTRIAL;
 
         // Get source tag properties
@@ -333,8 +333,8 @@ public class OnlyMemoryData implements ICoverageData {
 
         // Handle position messages. If it's not a position message
         // the calculators can't use them
-        if (aisMessage instanceof AisPositionMessage) {
-            posMessage = (AisPositionMessage) aisMessage;
+        if (aisMessage instanceof IVesselPositionMessage) {
+            posMessage = (IVesselPositionMessage) aisMessage;
         } else {
             return null;
         }
