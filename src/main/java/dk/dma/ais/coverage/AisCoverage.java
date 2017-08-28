@@ -25,9 +25,11 @@ import dk.dma.ais.coverage.persistence.TypeBasedDatabaseInstanceFactory;
 import dk.dma.ais.coverage.web.WebServer;
 import dk.dma.ais.packet.AisPacket;
 import dk.dma.ais.reader.AisReader;
+import dk.dma.commons.util.DateTimeUtil;
 import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 import org.apache.commons.collections4.IterableUtils;
+import org.joda.time.PeriodType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +108,9 @@ public final class AisCoverage {
         }
         Instant end = Instant.now();
         LOG.info("Loading coverage data and converting to memory structure took [{}] ms", Duration.between(start, end).toMillis());
+        if (Helper.firstMessage != null) {
+            LOG.info("First message timestamp: {}. Window size should be: {}", Helper.firstMessage, DateTimeUtil.toInterval(Helper.firstMessage, new Date()).toPeriod(PeriodType.hours()).getHours());
+        }
     }
 
     private void adjustSystemEarliestMessageFromCell(Cell cell) {
