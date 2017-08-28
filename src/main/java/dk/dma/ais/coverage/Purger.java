@@ -14,12 +14,11 @@
  */
 package dk.dma.ais.coverage;
 
-import java.util.Date;
-
+import dk.dma.ais.coverage.data.ICoverageData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dk.dma.ais.coverage.data.ICoverageData;
+import java.util.Date;
 
 public class Purger extends Thread {
     private static final Logger LOG = LoggerFactory.getLogger(Purger.class);
@@ -28,8 +27,7 @@ public class Purger extends Thread {
     private final ICoverageData dataHandler;
     private final int pollTimeInSeconds;
 
-    public Purger(int maxWindowSize, ICoverageData dataHandler,
-            int pollTimeInSeconds) {
+    public Purger(int maxWindowSize, ICoverageData dataHandler, int pollTimeInSeconds) {
         this.maxWindowSize = maxWindowSize;
         this.dataHandler = dataHandler;
         this.pollTimeInSeconds = pollTimeInSeconds;
@@ -39,20 +37,13 @@ public class Purger extends Thread {
     public void run() {
         while (true) {
             if (Helper.latestMessage != null && Helper.firstMessage != null) {
-                int windowSize = (int) ((Helper.getCeilDate(
-                        Helper.latestMessage).getTime() - Helper.getFloorDate(
-                        Helper.firstMessage).getTime()) / 1000 / 60 / 60);
+                int currentWindowSize = getCurrentWindowSize();
 
-                if (windowSize > maxWindowSize) {
-                    Date trimPoint = new Date(Helper.getCeilDate(
-                            Helper.latestMessage).getTime()
-                            - (1000 * 60 * 60 * maxWindowSize));
-                    LOG.info("Window size: " + windowSize
-                            + ". Max window size: " + maxWindowSize
-                            + ". Lets purge data until " + trimPoint);
+                if (currentWindowSize > maxWindowSize) {
+                    Date trimPoint = getTrimPoint();
+                    LOG.info("Window size: {}. Max window size: {}. Lets purge data until {}", currentWindowSize, maxWindowSize, trimPoint);
 
                     dataHandler.trimWindow(trimPoint);
-
                 }
             }
 
@@ -62,6 +53,16 @@ public class Purger extends Thread {
                 LOG.error("Failed sleeping", e);
             }
         }
+    }
+
+    private int getCurrentWindowSize() {
+        long latestMessageCeilingDate = Helper.getCeilDate(Helper.latestMessage).getTime();
+        long firstMessageFloorDate = Helper.getFloorDate(Helper.firstMessage).getTime();
+        return (int) ((latestMessageCeilingDate - firstMessageFloorDate) / 1000 / 60 / 60);
+    }
+
+    Date getTrimPoint() {
+        return new Date(Helper.getCeilDate(Helper.latestMessage).getTime() - (1000L * 60 * 60 * maxWindowSize));
     }
 
 }
