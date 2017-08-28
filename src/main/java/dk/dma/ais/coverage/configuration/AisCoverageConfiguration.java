@@ -47,6 +47,7 @@ public class AisCoverageConfiguration {
     private DatabaseConfiguration dbConf = new DatabaseConfiguration();
     private Map<String, Source_UserProvided> sourcenames = new HashMap<String, Source_UserProvided>();
     private int windowSize = 5;
+    private int receivedPacketsBufferSize = 10000;
 
     public Map<String, Source_UserProvided> getSourceNameMap() {
         return sourcenames;
@@ -146,4 +147,11 @@ public class AisCoverageConfiguration {
         this.windowSize = windowSize;
     }
 
+    public int getReceivedPacketsBufferSize() {
+        return receivedPacketsBufferSize;
+    }
+
+    public void setReceivedPacketsBufferSize(int receivedPacketsBufferSize) {
+        this.receivedPacketsBufferSize = receivedPacketsBufferSize;
+    }
 }

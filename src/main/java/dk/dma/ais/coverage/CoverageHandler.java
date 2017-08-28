@@ -14,6 +14,7 @@
  */
 package dk.dma.ais.coverage;
 
+import dk.dma.ais.bus.OverflowLogger;
 import dk.dma.ais.coverage.calculator.AbstractCalculator;
 import dk.dma.ais.coverage.calculator.SatCalculator;
 import dk.dma.ais.coverage.calculator.TerrestrialCalculator;
@@ -27,23 +28,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Handler for received AisPackets
  */
 public class CoverageHandler {
     private static final Logger LOG = LoggerFactory.getLogger(CoverageHandler.class);
+    private final OverflowLogger overflowLogger = new OverflowLogger(LOG);
+
+    private final Queue<AisPacket> unhandledPackets = new ConcurrentLinkedQueue<>();
+    private final ExecutorService packetHandlingThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
+    private final int maximumUnhandledPacketsKept;
 
     private List<AbstractCalculator> calculators = new ArrayList<AbstractCalculator>();
+
     private ICoverageData dataHandler;
+
     private AisCoverageConfiguration conf;
 
     //A doublet filtered message buffer, where a custom message will include a list of all sources
-    private LinkedHashMap<String, CustomMessage> doubletBuffer = new LinkedHashMap<String, CustomMessage>() {
+    private Map<String, CustomMessage> doubletBuffer = Collections.synchronizedMap(new LinkedHashMap<String, CustomMessage>() {
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -53,12 +68,11 @@ public class CoverageHandler {
             }
             return this.size() > getMessageBufferSize();
         }
-    };
+    });
 
     private int getMessageBufferSize() {
         return this.conf.getMessageBufferSize();
     }
-
     //Fields used for debugging purposes
     private int unfiltCount;
     private long biggestDelay;
@@ -70,6 +84,9 @@ public class CoverageHandler {
         this.conf=conf;
         Helper.conf=conf;
 
+        maximumUnhandledPacketsKept = conf.getReceivedPacketsBufferSize();
+
+        LOG.info("Using {} thread(s) to handle incoming AIS packets", Runtime.getRuntime().availableProcessors() / 2);
         LOG.info("Message buffer size initialized with value [{}]", getMessageBufferSize());
 
         //Creating up data handler
@@ -118,25 +135,16 @@ public class CoverageHandler {
 
     public void receiveUnfiltered(AisPacket packet) {
         unfiltCount++;
-        
-        //extract relevant information from packet
-        CustomMessage message = dataHandler.packetToCustomMessage(packet);
-        if (message == null) {
+
+        final int numberOfUnhandledPackets = unhandledPackets.size();
+        if (numberOfUnhandledPackets >= maximumUnhandledPacketsKept) {
+            overflowLogger.log("Received AIS packets buffer overflow: " + numberOfUnhandledPackets + " currently unhandled packets");
             return;
         }
-        
-        String key = message.getKey();
-        
-        //Add to doublet buffer.
-        CustomMessage existing = doubletBuffer.get(key);
-        if (existing == null) {
-            doubletBuffer.put(key, message);
-        }else{
-            if (message.getSourceList().iterator().hasNext()) {
-                existing.addSourceMMSI(message.getSourceList().iterator().next());
-            }
-        }
 
+        unhandledPackets.add(packet);
+
+        packetHandlingThreadPool.submit(new AisPacketHandler());
     }
     
     void process(CustomMessage m){
@@ -194,5 +202,49 @@ public class CoverageHandler {
 
     public SatCalculator getSatCalc() {
         return (SatCalculator) calculators.get(1);
+    }
+
+    public void stop() {
+        packetHandlingThreadPool.shutdown();
+
+        try {
+            if (!packetHandlingThreadPool.awaitTermination(60, TimeUnit.SECONDS)) {
+                packetHandlingThreadPool.shutdownNow();
+                if (!packetHandlingThreadPool.awaitTermination(60, TimeUnit.SECONDS)) {
+                    LOG.warn("Pool did not terminate");
+                }
+            }
+        } catch (InterruptedException ie) {
+            packetHandlingThreadPool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private class AisPacketHandler implements Callable<Void> {
+
+        @Override
+        public Void call() throws Exception {
+            AisPacket packet = unhandledPackets.poll();
+
+            //extract relevant information from packet
+            CustomMessage message = dataHandler.packetToCustomMessage(packet);
+            if (message == null) {
+                return null;
+            }
+
+            String key = message.getKey();
+
+            //Add to doublet buffer.
+            CustomMessage existing = doubletBuffer.get(key);
+            if (existing == null) {
+                doubletBuffer.put(key, message);
+            } else {
+                if (message.getSourceList().iterator().hasNext()) {
+                    existing.addSourceMMSI(message.getSourceList().iterator().next());
+                }
+            }
+
+            return null;
+        }
     }
 }

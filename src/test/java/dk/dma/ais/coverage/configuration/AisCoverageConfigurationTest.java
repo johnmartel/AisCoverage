@@ -14,4 +14,11 @@ public class AisCoverageConfigurationTest {
 
         assertThat(configuration.getMessageBufferSize(), is(equalTo(10000)));
     }
+
+    @Test
+    public void whenNewInstance_thenReceivedPacketsBufferSizeDefaultsTo10000() {
+        AisCoverageConfiguration configuration = new AisCoverageConfiguration();
+
+        assertThat(configuration.getReceivedPacketsBufferSize(), is(equalTo(10000)));
+    }
 }

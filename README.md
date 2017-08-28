@@ -32,7 +32,28 @@ M2 Eclipse plugin or
 ## Storing Coverage Data ##
 Only MongoDB is supported at the moment. Mongo v3.4.2 or above needs to be installed and authentication is not yet supported.
 
-Data (atthe highest detailed level) is persisted by a background thread at regular (configurable) intervals. The default is 60 minutes.
+Data (at the highest detailed level) is persisted by a background thread at regular (configurable) intervals. The default is 60 minutes.
+
+## Handling incoming AIS packets
+
+To avoid saturating the system with incoming packets, an overflow mechanism is implemented both at the `AisBus` and `CoverageHandler`
+levels. The `AisBus` drops packets if lower layers of the application cannot handle more incoming packets. The `CoverageHandler` consumes the
+packets provided by the bus through its consumers, but since it requires time to process every single packet, another buffer level is introduced
+to let the bus provide as much packets as possible and give handling threads a chance to process messages with dropping as few as possible.
+
+The size of the `AisBus` can be configured with the `<busQueueSize>` configuration element, while the `CoverageHandler` can be configured with the `<receivedPacketsBufferSize>` element:
+
+```xml
+<aisCoverageConfiguration>
+    <aisbus>
+        <busQueueSize>10000</busQueueSize>
+    </aisbus>
+    
+    <receivedPacketsBufferSize>10000</receivedPacketsBufferSize>
+</aisCoverageConfiguration>
+```
+
+Past these limits, the system will start overflowing and dropping packets.
 
 ## Distribution ##
 

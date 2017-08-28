@@ -164,6 +164,7 @@ public final class AisCoverage {
         }
         
         aisBus.cancel();
+        handler.stop();
         LOG.info("aisbus stopped");
 
         persisterService.stop();
